@@ -1,0 +1,26 @@
+{
+  "name": "pillar5-backend",
+  "version": "2.0.0",
+  "description": "Pillar 5 Group — IT Ticketing System API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev":   "nodemon server.js"
+  },
+  "keywords": [],
+  "author": "s.ngandana@pillar5group.co.za",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcrypt":        "^6.0.0",
+    "cors":          "^2.8.6",
+    "dotenv":        "^17.4.2",
+    "express":       "^5.2.1",
+    "jsonwebtoken":  "^9.0.3",
+    "multer":        "^1.4.5-lts.2",
+    "pg":            "^8.11.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
