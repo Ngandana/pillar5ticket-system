@@ -62,10 +62,10 @@ Runs at: **http://localhost:5173**
 
 ```env
 # PostgreSQL
-DB_HOST=localhost
+DB_HOST=dpg-d8h85dc8aovs73euph40-a
 DB_PORT=5432
 DB_USER=postgres
-DB_PASSWORD=your_password
+DB_PASSWORD=nBqnzLiug5evhuShjXFp1qT3X5QRH32C
 DB_NAME=pillar5_tickets
 
 # JWT
@@ -73,7 +73,7 @@ JWT_SECRET=change_me_to_something_long
 
 # Server
 PORT=5000
-ALLOWED_ORIGIN=http://localhost:5173
+ALLOWED_ORIGIN=http:[//localhost:5173](https://pillar5ticket-system.vercel.app)
 ```
 
 **For Render + Railway**, see [RENDER_DEPLOYMENT.md](./RENDER_DEPLOYMENT.md) for exact values.
