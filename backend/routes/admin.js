@@ -1,10 +1,12 @@
 /**
  * routes/admin.js
- * All admin-only routes — master queue, stats, tech list, update, CSV export.
+ * Admin-only routes with tiered access control
+ * SUPER_ADMIN: full access (assign, escalate, etc.)
+ * TECH_ADMIN: can respond and update status, but not assign or escalate
  */
 const router = require('express').Router();
-const { pool }       = require('../db/init');
-const { verifyAdmin } = require('../middleware/auth');
+const { pool }            = require('../db/init');
+const { verifySuperAdmin, verifyAdminOnly, verifyTechAdmin } = require('../middleware/auth');
 
 const logActivity = async (ticketId, userName, action) => {
   try {
@@ -15,17 +17,17 @@ const logActivity = async (ticketId, userName, action) => {
   } catch (_) {}
 };
 
-// GET /api/admin/tickets — full master queue
-router.get('/tickets', verifyAdmin, async (req, res) => {
+// ── Triage Queue (TECH_ADMIN+) ──────────────────────────────
+router.get('/tickets', verifyTechAdmin, async (req, res) => {
   try {
-    const result = await pool.query(
+    const [rows] = await pool.query(
       `SELECT
           t.*,
           u.name  AS requester_name,
           u.email AS requester_email,
           a.name  AS assignee_name
        FROM tickets t
-       JOIN  users u ON t.user_id = u.id
+       JOIN users u ON t.user_id = u.id
        LEFT JOIN users a ON t.assigned_to = a.id
        WHERE t.is_withdrawn = FALSE
        ORDER BY
@@ -37,36 +39,38 @@ router.get('/tickets', verifyAdmin, async (req, res) => {
          END,
          t.created_at DESC`
     );
-    res.json(result.rows);
+    res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// GET /api/admin/stats — KPI counts
-router.get('/stats', verifyAdmin, async (req, res) => {
+// ── KPI Stats (TECH_ADMIN+) ─────────────────────────────────
+router.get('/stats', verifyTechAdmin, async (req, res) => {
   try {
-    const totalRes    = await pool.query("SELECT COUNT(*) AS total FROM tickets WHERE is_withdrawn=FALSE");
-    const openRes     = await pool.query("SELECT COUNT(*) AS open  FROM tickets WHERE status IN ('Open','In Progress') AND is_withdrawn=FALSE");
-    const highRes     = await pool.query("SELECT COUNT(*) AS high  FROM tickets WHERE priority IN ('High','Critical') AND status != 'Resolved' AND is_withdrawn=FALSE");
-    const resolvedRes = await pool.query("SELECT COUNT(*) AS resolved FROM tickets WHERE status='Resolved' AND is_withdrawn=FALSE");
-    const todayRes    = await pool.query("SELECT COUNT(*) AS today FROM tickets WHERE DATE(created_at)=CURRENT_DATE AND is_withdrawn=FALSE");
-    const total    = totalRes.rows[0].total;
-    const open     = openRes.rows[0].open;
-    const high     = highRes.rows[0].high;
-    const resolved = resolvedRes.rows[0].resolved;
-    const today    = todayRes.rows[0].today;
-    res.json({ total, open, high, resolved, today });
+    const total = await pool.query("SELECT COUNT(*) AS count FROM tickets WHERE is_withdrawn=FALSE");
+    const open = await pool.query("SELECT COUNT(*) AS count FROM tickets WHERE status IN ('Open','In Progress') AND is_withdrawn=FALSE");
+    const high = await pool.query("SELECT COUNT(*) AS count FROM tickets WHERE priority IN ('High','Critical') AND status != 'Resolved' AND is_withdrawn=FALSE");
+    const resolved = await pool.query("SELECT COUNT(*) AS count FROM tickets WHERE status='Resolved' AND is_withdrawn=FALSE");
+    const today = await pool.query("SELECT COUNT(*) AS count FROM tickets WHERE DATE(created_at)=CURRENT_DATE AND is_withdrawn=FALSE");
+
+    res.json({
+      total: total.rows[0].count,
+      open: open.rows[0].count,
+      high: high.rows[0].count,
+      resolved: resolved.rows[0].count,
+      today: today.rows[0].count,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// GET /api/admin/techs — list of admin users for assignment dropdown
-router.get('/techs', verifyAdmin, async (req, res) => {
+// ── Tech List (TECH_ADMIN+) ─────────────────────────────────
+router.get('/techs', verifyTechAdmin, async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT id, name, email FROM users WHERE role='Admin' ORDER BY name"
+      "SELECT id, name, email, role FROM users WHERE role IN ('SUPER_ADMIN', 'TECH_ADMIN') ORDER BY name"
     );
     res.json(result.rows);
   } catch (err) {
@@ -74,48 +78,62 @@ router.get('/techs', verifyAdmin, async (req, res) => {
   }
 });
 
-// PUT /api/admin/tickets/:id — update status, priority, assignee
-router.put('/tickets/:id', verifyAdmin, async (req, res) => {
+// ── Update Ticket (SUPER_ADMIN only for assigning) ─────────
+router.put('/tickets/:id', verifyTechAdmin, async (req, res) => {
   try {
     const { status, priority, assigned_to } = req.body;
     const ticketId = req.params.id;
+    const isSuperAdmin = req.user.role === 'SUPER_ADMIN';
 
-    const currentRes = await pool.query('SELECT * FROM tickets WHERE id = $1', [ticketId]);
-    if (currentRes.rows.length === 0) return res.status(404).json({ message: 'Ticket not found.' });
-    const old = currentRes.rows[0];
+    const current = await pool.query('SELECT * FROM tickets WHERE id = $1', [ticketId]);
+    if (current.rows.length === 0) return res.status(404).json({ message: 'Ticket not found.' });
+    const old = current.rows[0];
+
+    // TECH_ADMIN can update status/priority but NOT assign
+    if (!isSuperAdmin && assigned_to && assigned_to !== old.assigned_to) {
+      return res.status(403).json({ message: 'Only super admin can assign tickets.' });
+    }
+
+    // TECH_ADMIN cannot escalate priority above current (security)
+    if (!isSuperAdmin && priority) {
+      const priorityRank = { Low: 1, Medium: 2, High: 3, Critical: 4 };
+      if (priorityRank[priority] > priorityRank[old.priority]) {
+        return res.status(403).json({ message: 'Only super admin can escalate priority.' });
+      }
+    }
 
     await pool.query(
       'UPDATE tickets SET status=$1, priority=$2, assigned_to=$3 WHERE id=$4',
       [status, priority, assigned_to || null, ticketId]
     );
 
-    // Auto-generate granular audit entries
-    if (old.status   !== status)
-      await logActivity(ticketId, req.user.name, `changed status from "${old.status}" to "${status}"`);
+    // Log changes
+    if (old.status !== status)
+      await logActivity(ticketId, req.user.name, `changed status to "${status}"`);
     if (old.priority !== priority)
-      await logActivity(ticketId, req.user.name, `changed priority from "${old.priority}" to "${priority}"`);
-    if (String(old.assigned_to || '') !== String(assigned_to || ''))
-      await logActivity(ticketId, req.user.name, `updated ticket assignment`);
+      await logActivity(ticketId, req.user.name, `changed priority to "${priority}"`);
+    if (isSuperAdmin && String(old.assigned_to || '') !== String(assigned_to || ''))
+      await logActivity(ticketId, req.user.name, 'updated assignment');
 
-    res.json({ message: 'Ticket updated successfully.' });
+    res.json({ message: 'Ticket updated.' });
   } catch (err) {
-    console.error('[AdminUpdate]', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// GET /api/admin/export — download full audit log as CSV
-router.get('/export', verifyAdmin, async (req, res) => {
+// ── Activity Logs (TECH_ADMIN+) ─────────────────────────────
+router.get('/export', verifyAdminOnly, async (req, res) => {
   try {
-    const logsRes = await pool.query(
+    const result = await pool.query(
       `SELECT al.id, t.ticket_ref, t.category, t.status, al.user_name, al.action, al.created_at
        FROM activity_logs al
        JOIN tickets t ON al.ticket_id = t.id
        ORDER BY al.created_at DESC`
     );
 
+    const logs = result.rows;
     const header = 'ID,Ticket Ref,Category,Status,User,Action,Timestamp\n';
-    const body   = logsRes.rows
+    const body   = logs
       .map(l =>
         [l.id, l.ticket_ref, l.category, l.status, l.user_name,
          `"${l.action.replace(/"/g, '""')}"`,
@@ -125,7 +143,7 @@ router.get('/export', verifyAdmin, async (req, res) => {
       .join('\n');
 
     res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', `attachment; filename="pillar5-audit-${Date.now()}.csv"`);
+    res.setHeader('Content-Disposition', `attachment; filename="p5-audit-${Date.now()}.csv"`);
     res.send(header + body);
   } catch (err) {
     res.status(500).json({ error: err.message });

@@ -1,21 +1,32 @@
 -- ============================================================
 -- Pillar 5 Group — IT Ticketing System
--- PostgreSQL Schema
--- Run once with: psql -U your_user -d your_database -f schema.sql
+-- PostgreSQL Schema (with Email Verification & Tiered Admin)
 -- ============================================================
 
 -- Create enums
-CREATE TYPE user_role AS ENUM ('Employee', 'Admin');
+CREATE TYPE user_role AS ENUM ('SUPER_ADMIN', 'TECH_ADMIN', 'EMPLOYEE');
 CREATE TYPE ticket_priority AS ENUM ('Low', 'Medium', 'High', 'Critical');
 CREATE TYPE ticket_status AS ENUM ('Open', 'In Progress', 'Waiting on User', 'Resolved', 'Withdrawn');
 
--- Users
+-- Users (with email verification)
 CREATE TABLE IF NOT EXISTS users (
+  id              SERIAL PRIMARY KEY,
+  name            VARCHAR(100) NOT NULL,
+  email           VARCHAR(100) UNIQUE NOT NULL,
+  password        VARCHAR(255) NOT NULL,
+  role            user_role DEFAULT 'EMPLOYEE',
+  email_verified  BOOLEAN DEFAULT FALSE,
+  verified_at     TIMESTAMP,
+  created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Email Verification Tokens
+CREATE TABLE IF NOT EXISTS verification_tokens (
   id         SERIAL PRIMARY KEY,
-  name       VARCHAR(100) NOT NULL,
-  email      VARCHAR(100) UNIQUE NOT NULL,
-  password   VARCHAR(255) NOT NULL,
-  role       user_role DEFAULT 'Employee',
+  user_id    INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token      VARCHAR(255) UNIQUE NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  used_at    TIMESTAMP,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -64,16 +75,16 @@ CREATE INDEX IF NOT EXISTS idx_tickets_assigned ON tickets(assigned_to);
 CREATE INDEX IF NOT EXISTS idx_tickets_status   ON tickets(status);
 CREATE INDEX IF NOT EXISTS idx_comments_ticket  ON comments(ticket_id);
 CREATE INDEX IF NOT EXISTS idx_logs_ticket      ON activity_logs(ticket_id);
+CREATE INDEX IF NOT EXISTS idx_verification_user ON verification_tokens(user_id);
 
--- Default admin seed (password: Admin@Pillar5!)
-INSERT INTO users (name, email, password, role)
+-- Default super admin (pre-verified)
+INSERT INTO users (name, email, password, role, email_verified, verified_at)
 VALUES (
   'System Admin',
   's.ngandana@pillar5group.co.za',
   '$2b$12$uJQ/.oH2QTeOSHo0q.Rjcu46J.UiVg3sFB0YvlqeCA2d.Ou6jucd2',
-  'Admin'
+  'SUPER_ADMIN',
+  TRUE,
+  CURRENT_TIMESTAMP
 )
 ON CONFLICT (email) DO NOTHING;
-
--- Verify
-SELECT id, name, email, role FROM users;

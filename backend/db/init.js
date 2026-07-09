@@ -1,7 +1,7 @@
 /**
  * db/init.js
  * PostgreSQL connection pool + database bootstrap
- * Optimized for Render with proper error handling
+ * Includes email verification tables and tiered admin roles
  */
 const { Pool } = require('pg');
 const bcrypt   = require('bcrypt');
@@ -12,20 +12,14 @@ const pool = new Pool({
   user:     process.env.DB_USER     || 'postgres',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME     || 'pillar5_tickets',
-  // Render-friendly settings
-  max: 20,                          // Max connections
-  idleTimeoutMillis: 30000,         // Close idle connections after 30s
-  connectionTimeoutMillis: 5000,    // Timeout if can't connect within 5s
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
 });
 
-// Handle pool errors
 pool.on('error', (err) => {
-  console.error('❌ Unexpected error on idle client:', err);
+  console.error('❌ Pool error:', err);
   process.exit(-1);
-});
-
-pool.on('connect', () => {
-  console.log('✅ Pool connection established');
 });
 
 async function initDB() {
@@ -38,7 +32,7 @@ async function initDB() {
     await client.query(`
       DO $$ BEGIN
         IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
-          CREATE TYPE user_role AS ENUM ('Employee', 'Admin');
+          CREATE TYPE user_role AS ENUM ('SUPER_ADMIN', 'TECH_ADMIN', 'EMPLOYEE');
         END IF;
       END $$;
     `);
@@ -59,14 +53,28 @@ async function initDB() {
       END $$;
     `);
 
-    // Users
+    // Users (with email verification)
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
+        id              SERIAL PRIMARY KEY,
+        name            VARCHAR(100) NOT NULL,
+        email           VARCHAR(100) UNIQUE NOT NULL,
+        password        VARCHAR(255) NOT NULL,
+        role            user_role DEFAULT 'EMPLOYEE',
+        email_verified  BOOLEAN DEFAULT FALSE,
+        verified_at     TIMESTAMP,
+        created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Verification tokens
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS verification_tokens (
         id         SERIAL PRIMARY KEY,
-        name       VARCHAR(100) NOT NULL,
-        email      VARCHAR(100) UNIQUE NOT NULL,
-        password   VARCHAR(255) NOT NULL,
-        role       user_role DEFAULT 'Employee',
+        user_id    INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        token      VARCHAR(255) UNIQUE NOT NULL,
+        expires_at TIMESTAMP NOT NULL,
+        used_at    TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
@@ -105,7 +113,7 @@ async function initDB() {
       );
     `);
 
-    // Activity Logs
+    // Activity logs
     await client.query(`
       CREATE TABLE IF NOT EXISTS activity_logs (
         id         SERIAL PRIMARY KEY,
@@ -116,23 +124,24 @@ async function initDB() {
       );
     `);
 
-    // Seed default admin if none exists
-    const result = await client.query(
-      "SELECT id FROM users WHERE email = 's.ngandana@pillar5group.co.za' LIMIT 1"
+    // Seed default super admin (pre-verified)
+    const adminCheck = await client.query(
+      "SELECT id FROM users WHERE email = 's.ngandana@pillar5group.co.za'"
     );
 
-    if (result.rows.length === 0) {
+    if (adminCheck.rows.length === 0) {
       const hash = await bcrypt.hash('Admin@Pillar5!', 12);
       await client.query(
-        "INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, 'Admin')",
+        `INSERT INTO users (name, email, password, role, email_verified, verified_at)
+         VALUES ($1, $2, $3, 'SUPER_ADMIN', TRUE, CURRENT_TIMESTAMP)`,
         ['System Admin', 's.ngandana@pillar5group.co.za', hash]
       );
-      console.log('✅ Default admin seeded → s.ngandana@pillar5group.co.za / Admin@Pillar5!');
+      console.log('✅ SUPER_ADMIN seeded → s.ngandana@pillar5group.co.za / Admin@Pillar5!');
     }
 
-    console.log('✅ All tables verified/created');
+    console.log('✅ Database ready (with email verification & tiered roles)');
   } catch (err) {
-    console.error('❌ Database initialisation error:', err.message);
+    console.error('❌ DB init error:', err.message);
     throw err;
   } finally {
     if (client) client.release();

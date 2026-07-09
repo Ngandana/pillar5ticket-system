@@ -1,7 +1,6 @@
 /**
  * lib/constants.js
  * Shared data: issue catalogue and office locations.
- * Edit this file to add/remove categories, sub-issues, and desks.
  */
 
 export const ISSUE_CATALOGUE = [
@@ -65,21 +64,22 @@ export const ISSUE_CATALOGUE = [
       'USB port not recognised',
     ],
   },
-  {
-    id: 'printer',
-    title: 'Printer Issue',
-    emoji: '🖨️',
-    color: '#3b82f6',
-    bg: '#eff6ff',
-    priority: 'Medium',
-    sub: [
-      'Paper jam',
-      'Out of toner or ink',
-      'Printer not found on network',
-      'Poor print quality / streaks',
-      'Printer showing as offline',
-    ],
-  },
+  // COMMENTED OUT: Printer Issue
+  // {
+  //   id: 'printer',
+  //   title: 'Printer Issue',
+  //   emoji: '🖨️',
+  //   color: '#3b82f6',
+  //   bg: '#eff6ff',
+  //   priority: 'Medium',
+  //   sub: [
+  //     'Paper jam',
+  //     'Out of toner or ink',
+  //     'Printer not found on network',
+  //     'Poor print quality / streaks',
+  //     'Printer showing as offline',
+  //   ],
+  // },
   {
     id: 'other',
     title: 'Other Issue',
@@ -108,9 +108,10 @@ export const OFFICE_LOCATIONS = {
     'Lab-Station-04', 'Lab-Station-05', 'Lab-Station-06',
     'Instructor Desk',
   ],
-  'IT Department': [
-    'IT-Desk-01', 'IT-Desk-02', 'IT-Desk-03',
-    'Server Room', 'IT Storage',
+  'Call Center': [
+    'CC-Desk-01', 'CC-Desk-02', 'CC-Desk-03',
+    'CC-Desk-04', 'CC-Desk-05', 'CC-Desk-06',
+    'CC-Manager-Desk',
   ],
 };
 
