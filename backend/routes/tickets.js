@@ -1,16 +1,19 @@
 /**
  * routes/tickets.js
  * Employee-facing ticket routes (create, list own, withdraw, comments).
+ * PostgreSQL (pg) syntax — $1, $2... placeholders, result.rows / RETURNING.
  */
 const router = require('express').Router();
 const { pool }        = require('../db/init');
 const { verifyToken } = require('../middleware/auth');
 const upload          = require('../middleware/upload');
 
+const ADMIN_ROLES = ['SUPER_ADMIN', 'TECH_ADMIN'];
+
 const logActivity = async (ticketId, userName, action) => {
   try {
     await pool.query(
-      'INSERT INTO activity_logs (ticket_id, user_name, action) VALUES (?, ?, ?)',
+      'INSERT INTO activity_logs (ticket_id, user_name, action) VALUES ($1, $2, $3)',
       [ticketId, userName, action]
     );
   } catch (_) {}
@@ -19,13 +22,13 @@ const logActivity = async (ticketId, userName, action) => {
 // GET /api/tickets/mine — current user's active tickets
 router.get('/mine', verifyToken, async (req, res) => {
   try {
-    const [rows] = await pool.query(
+    const result = await pool.query(
       `SELECT * FROM tickets
-       WHERE user_id = ? AND is_withdrawn = FALSE
+       WHERE user_id = $1 AND is_withdrawn = FALSE
        ORDER BY created_at DESC`,
       [req.user.id]
     );
-    res.json(rows);
+    res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -47,11 +50,12 @@ router.post('/', verifyToken, upload.single('image'), async (req, res) => {
     const ticketRef = `TKT-${ts}-${rand}`;
     const imageUrl  = req.file ? `/uploads/${req.file.filename}` : null;
 
-    const [result] = await pool.query(
+    const result = await pool.query(
       `INSERT INTO tickets
          (ticket_ref, user_id, category, sub_category, location_zone,
           desk_number, desktop_id, details, priority, image_url)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       RETURNING *`,
       [
         ticketRef, req.user.id, category,
         subCategory || null, locationZone,
@@ -61,9 +65,9 @@ router.post('/', verifyToken, upload.single('image'), async (req, res) => {
       ]
     );
 
-    const [rows] = await pool.query('SELECT * FROM tickets WHERE id = ?', [result.insertId]);
-    await logActivity(result.insertId, req.user.name, 'opened this ticket');
-    res.status(201).json(rows[0]);
+    const newTicket = result.rows[0];
+    await logActivity(newTicket.id, req.user.name, 'opened this ticket');
+    res.status(201).json(newTicket);
   } catch (err) {
     console.error('[CreateTicket]', err);
     res.status(500).json({ error: err.message });
@@ -73,13 +77,15 @@ router.post('/', verifyToken, upload.single('image'), async (req, res) => {
 // PUT /api/tickets/:id/withdraw — soft delete by owner
 router.put('/:id/withdraw', verifyToken, async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT user_id FROM tickets WHERE id = ?', [req.params.id]);
-    if (rows.length === 0) return res.status(404).json({ message: 'Ticket not found.' });
-    if (rows[0].user_id !== req.user.id && req.user.role !== 'Admin')
+    const result = await pool.query('SELECT user_id FROM tickets WHERE id = $1', [req.params.id]);
+    if (result.rows.length === 0) return res.status(404).json({ message: 'Ticket not found.' });
+
+    const ticket = result.rows[0];
+    if (ticket.user_id !== req.user.id && !ADMIN_ROLES.includes(req.user.role))
       return res.status(403).json({ message: 'You can only withdraw your own tickets.' });
 
     await pool.query(
-      "UPDATE tickets SET is_withdrawn = TRUE, status = 'Withdrawn' WHERE id = ?",
+      "UPDATE tickets SET is_withdrawn = TRUE, status = 'Withdrawn' WHERE id = $1",
       [req.params.id]
     );
     await logActivity(req.params.id, req.user.name, 'withdrew (cancelled) this ticket');
@@ -92,17 +98,18 @@ router.put('/:id/withdraw', verifyToken, async (req, res) => {
 // GET /api/tickets/:id/comments
 router.get('/:id/comments', verifyToken, async (req, res) => {
   try {
-    // Employees only see public comments; admins see all
-    const filter = req.user.role === 'Admin' ? '' : 'AND c.is_internal = FALSE';
-    const [rows] = await pool.query(
+    // Employees only see public comments; admins (SUPER_ADMIN/TECH_ADMIN) see all
+    const isAdmin = ADMIN_ROLES.includes(req.user.role);
+    const filter  = isAdmin ? '' : 'AND c.is_internal = FALSE';
+    const result  = await pool.query(
       `SELECT c.*, u.name AS author_name, u.role AS author_role
        FROM comments c
        JOIN users u ON c.user_id = u.id
-       WHERE c.ticket_id = ? ${filter}
+       WHERE c.ticket_id = $1 ${filter}
        ORDER BY c.created_at ASC`,
       [req.params.id]
     );
-    res.json(rows);
+    res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -114,19 +121,20 @@ router.post('/:id/comments', verifyToken, async (req, res) => {
     const { content, isInternal } = req.body;
     if (!content?.trim()) return res.status(400).json({ message: 'Comment cannot be empty.' });
 
-    const internal = req.user.role === 'Admin' && Boolean(isInternal);
+    const internal = ADMIN_ROLES.includes(req.user.role) && Boolean(isInternal);
 
-    const [result] = await pool.query(
-      'INSERT INTO comments (ticket_id, user_id, content, is_internal) VALUES (?, ?, ?, ?)',
+    const inserted = await pool.query(
+      'INSERT INTO comments (ticket_id, user_id, content, is_internal) VALUES ($1, $2, $3, $4) RETURNING id',
       [req.params.id, req.user.id, content.trim(), internal]
     );
-    const [rows] = await pool.query(
+
+    const result = await pool.query(
       `SELECT c.*, u.name AS author_name, u.role AS author_role
        FROM comments c JOIN users u ON c.user_id = u.id
-       WHERE c.id = ?`,
-      [result.insertId]
+       WHERE c.id = $1`,
+      [inserted.rows[0].id]
     );
-    res.status(201).json(rows[0]);
+    res.status(201).json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -135,11 +143,15 @@ router.post('/:id/comments', verifyToken, async (req, res) => {
 // GET /api/tickets/:id/logs
 router.get('/:id/logs', verifyToken, async (req, res) => {
   try {
-    const [rows] = await pool.query(
-      'SELECT * FROM activity_logs WHERE ticket_id = ? ORDER BY created_at ASC',
+    // TECH_ADMIN cannot access audit logs (same restriction as CSV export)
+    if (req.user.role === 'TECH_ADMIN')
+      return res.status(403).json({ message: 'Audit logs are restricted to super admins.' });
+
+    const result = await pool.query(
+      'SELECT * FROM activity_logs WHERE ticket_id = $1 ORDER BY created_at ASC',
       [req.params.id]
     );
-    res.json(rows);
+    res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

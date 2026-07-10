@@ -153,12 +153,10 @@ button { cursor: pointer; border: none; background: none; }
   font-weight: 900; font-size: 18px; color: #fff; letter-spacing: 1px;
 }
 .auth-logo-img {
-  width: 80px;
-  height: 80px;
-  margin-bottom: 16px;
-  border-radius: 12px;
-  object-fit: contain;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  width: 56px; height: 56px; border-radius: 16px; margin: 0 auto 14px;
+  object-fit: contain; display: block;
+  box-shadow: 0 8px 32px rgba(59,130,246,0.25);
+  background: rgba(255,255,255,0.06);
 }
 .auth-heading { color: var(--text); font-weight: 800; font-size: 22px; margin-bottom: 4px; }
 .auth-tagline { color: var(--text-dim); font-size: 13px; }
@@ -194,6 +192,12 @@ button { cursor: pointer; border: none; background: none; }
   color: var(--text-dim); padding: 2px;
 }
 .pw-toggle:hover { color: var(--text-muted); }
+.auth-forgot-link {
+  display: block; margin-top: 8px; margin-left: auto;
+  font-size: 12px; font-weight: 600; color: var(--accent, #3b82f6);
+  text-decoration: underline; text-underline-offset: 2px;
+}
+.auth-forgot-link:hover { opacity: 0.8; }
 .auth-submit {
   background: linear-gradient(135deg, #3b82f6, #06b6d4);
   border-radius: 12px; padding: 12px; color: #fff;
@@ -208,6 +212,11 @@ button { cursor: pointer; border: none; background: none; }
   font-size: 11px; color: var(--text-dim); text-align: center; line-height: 1.8;
 }
 .auth-hint code { color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+.auth-link {
+  display: block; width: 100%; text-align: center; margin-top: 18px;
+  font-size: 13px; font-weight: 600; color: var(--text-dim);
+}
+.auth-link:hover { color: var(--accent); }
 
 /* ── Admin page ────────────────────────────────────────────── */
 .admin-page {

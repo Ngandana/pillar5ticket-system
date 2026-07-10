@@ -7,7 +7,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { api } from '../lib/api';
 import Spinner from '../components/shared/Spinner';
 
-export default function AuthPage({ onSuccess }) {
+export default function AuthPage({ onSuccess, onForgotPassword }) {
   const [mode, setMode] = useState('login');
   const [role, setRole] = useState('EMPLOYEE');
   const [name, setName] = useState('');
@@ -53,7 +53,17 @@ export default function AuthPage({ onSuccess }) {
 
       <div className="auth-card">
         <div className="auth-logo-wrap">
-          <img src="/logo.png" alt="Company Logo" className="auth-logo-img" />
+          <img
+            src="/logo.png"
+            alt="Pillar 5 Group"
+            className="auth-logo-img"
+            onError={(e) => {
+              // No logo.png present yet — fall back to the text badge
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'flex';
+            }}
+          />
+          <div className="auth-logo" style={{ display: 'none' }}>P5</div>
           <h1 className="auth-heading">Pillar 5 Group</h1>
           <p className="auth-tagline">IT Support Portal</p>
         </div>
@@ -125,7 +135,7 @@ export default function AuthPage({ onSuccess }) {
               required
               value={email}
               onChange={e => setEmail(e.target.value)}
-              placeholder="name@pillar5.com"
+              placeholder="name@pillar5group.co.za"
               autoComplete="email"
             />
           </div>
@@ -145,11 +155,20 @@ export default function AuthPage({ onSuccess }) {
                 {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
               </button>
             </div>
+            {mode === 'login' && (
+              <button
+                type="button"
+                onClick={onForgotPassword}
+                className="auth-forgot-link"
+              >
+                Forgot password?
+              </button>
+            )}
           </div>
 
           <button type="submit" disabled={loading} className="auth-submit">
             {loading ? <Spinner size={16} /> : null}
-            {mode === 'login' ? 'Sign In' : 'Create Account & Verify Email'}
+            {mode === 'login' ? 'Sign In' : 'Create Account'}
           </button>
         </form>
 

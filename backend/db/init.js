@@ -126,7 +126,7 @@ async function initDB() {
 
     // Seed default super admin (pre-verified)
     const adminCheck = await client.query(
-      "SELECT id FROM users WHERE email = 's.ngandana@pillar5group.co.za'"
+      "SELECT id, role FROM users WHERE email = 's.ngandana@pillar5group.co.za'"
     );
 
     if (adminCheck.rows.length === 0) {
@@ -137,6 +137,14 @@ async function initDB() {
         ['System Admin', 's.ngandana@pillar5group.co.za', hash]
       );
       console.log('✅ SUPER_ADMIN seeded → s.ngandana@pillar5group.co.za / Admin@Pillar5!');
+    } else if (adminCheck.rows[0].role !== 'SUPER_ADMIN') {
+      // Self-heal: an older script or manual edit may have set an invalid/legacy
+      // role value (e.g. 'Admin') on this account, which would silently route
+      // the account into the employee dashboard on login.
+      await client.query(
+        "UPDATE users SET role = 'SUPER_ADMIN', email_verified = TRUE WHERE email = 's.ngandana@pillar5group.co.za'"
+      );
+      console.log(`⚠️  Corrected default admin role from "${adminCheck.rows[0].role}" to "SUPER_ADMIN".`);
     }
 
     console.log('✅ Database ready (with email verification & tiered roles)');

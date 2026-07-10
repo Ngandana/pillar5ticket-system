@@ -20,7 +20,7 @@ const logActivity = async (ticketId, userName, action) => {
 // ── Triage Queue (TECH_ADMIN+) ──────────────────────────────
 router.get('/tickets', verifyTechAdmin, async (req, res) => {
   try {
-    const [rows] = await pool.query(
+    const result = await pool.query(
       `SELECT
           t.*,
           u.name  AS requester_name,
@@ -39,7 +39,7 @@ router.get('/tickets', verifyTechAdmin, async (req, res) => {
          END,
          t.created_at DESC`
     );
-    res.json(rows);
+    res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

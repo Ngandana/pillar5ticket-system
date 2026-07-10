@@ -8,6 +8,8 @@ import { PriorityBadge, StatusBadge } from '../shared/Badge';
 import { relativeTime, fullDate, imageUrl } from '../../lib/utils';
 import { api } from '../../lib/api';
 
+const PRIORITY_RANK = { Low: 1, Medium: 2, High: 3, Critical: 4 };
+
 export default function TicketDetail({ ticket, user, techs, onTicketUpdate }) {
   const [comments,    setComments]    = useState([]);
   const [logs,        setLogs]        = useState([]);
@@ -15,6 +17,8 @@ export default function TicketDetail({ ticket, user, techs, onTicketUpdate }) {
   const [newComment,  setNewComment]  = useState('');
   const [isInternal,  setIsInternal]  = useState(false);
   const chatEndRef = useRef(null);
+
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
   // Fetch comments + logs whenever the selected ticket changes
   useEffect(() => {
@@ -120,9 +124,16 @@ export default function TicketDetail({ ticket, user, techs, onTicketUpdate }) {
               value={ticket.priority}
               onChange={e => handleUpdate('priority', e.target.value)}
               className="ctrl-select"
+              title={!isSuperAdmin ? 'IT Support can lower priority but only a super admin can escalate it.' : undefined}
             >
-              {['Low', 'Medium', 'High', 'Critical'].map(p =>
-                <option key={p}>{p}</option>)}
+              {['Low', 'Medium', 'High', 'Critical'].map(p => (
+                <option
+                  key={p}
+                  disabled={!isSuperAdmin && PRIORITY_RANK[p] > PRIORITY_RANK[ticket.priority]}
+                >
+                  {p}
+                </option>
+              ))}
             </select>
 
             <label className="ctrl-label">Assigned To</label>
@@ -130,6 +141,8 @@ export default function TicketDetail({ ticket, user, techs, onTicketUpdate }) {
               value={ticket.assigned_to || ''}
               onChange={e => handleUpdate('assigned_to', e.target.value || null)}
               className="ctrl-select"
+              disabled={!isSuperAdmin}
+              title={!isSuperAdmin ? 'Only a super admin can assign tickets.' : undefined}
             >
               <option value="">Unassigned</option>
               {techs.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -161,17 +174,19 @@ export default function TicketDetail({ ticket, user, techs, onTicketUpdate }) {
         >
           <MessageSquare size={14} /> Communication
         </button>
-        <button
-          className={`tab-btn ${activeTab === 'logs' ? 'tab-btn--active' : ''}`}
-          onClick={() => setActiveTab('logs')}
-        >
-          <Activity size={14} /> Audit Trail
-        </button>
+        {isSuperAdmin && (
+          <button
+            className={`tab-btn ${activeTab === 'logs' ? 'tab-btn--active' : ''}`}
+            onClick={() => setActiveTab('logs')}
+          >
+            <Activity size={14} /> Audit Trail
+          </button>
+        )}
       </div>
 
       {/* ── Tab Content ────────────────────────────────── */}
       <div className="detail-content">
-        {activeTab === 'comments' ? (
+        {activeTab === 'comments' || !isSuperAdmin ? (
           <div className="comments-list">
             {comments.length === 0 ? (
               <p className="content-empty">No communication on this ticket yet.</p>

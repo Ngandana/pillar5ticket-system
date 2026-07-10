@@ -9,7 +9,8 @@ import { relativeTime } from '../../lib/utils';
 
 const PRIORITY_WEIGHT = { Critical: 4, High: 3, Medium: 2, Low: 1 };
 
-export default function TicketQueue({ tickets, selectedId, onSelect, onRefresh, onExport, loading }) {
+export default function TicketQueue({ tickets, selectedId, onSelect, onRefresh, onExport, loading, user }) {
+  const canExport = user?.role === 'SUPER_ADMIN';
   const [search,   setSearch]   = useState('');
   const [status,   setStatus]   = useState('All');
   const [priority, setPriority] = useState('All');
@@ -47,9 +48,11 @@ export default function TicketQueue({ tickets, selectedId, onSelect, onRefresh, 
             <button className="icon-btn" onClick={onRefresh} title="Refresh" disabled={loading}>
               <RefreshCw size={13} className={loading ? 'spin' : ''} />
             </button>
-            <button className="icon-btn icon-btn--label" onClick={onExport} title="Export CSV">
-              <Download size={13} /> CSV
-            </button>
+            {canExport && (
+              <button className="icon-btn icon-btn--label" onClick={onExport} title="Export CSV">
+                <Download size={13} /> CSV
+              </button>
+            )}
           </div>
         </div>
 

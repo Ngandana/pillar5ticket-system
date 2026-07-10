@@ -1,0 +1,184 @@
+═══════════════════════════════════════════════════════════════
+PILLAR 5 TICKET SYSTEM — v2.4 CHANGES
+═══════════════════════════════════════════════════════════════
+
+This update fixes the SUPER_ADMIN routing bug, wires up the logo
+and forgot-password features properly, adds real TECH_ADMIN
+restrictions to the UI, and fixes two backend bugs that would
+have broken ticket creation/loading entirely.
+
+───────────────────────────────────────────────────────────────
+1. ROOT CAUSE OF THE "SUPER_ADMIN GOES TO EMPLOYEE PAGE" BUG
+───────────────────────────────────────────────────────────────
+Your App.jsx routing logic was actually already correct — it
+checks `['SUPER_ADMIN','TECH_ADMIN'].includes(user.role)`.
+
+The real problem was in backend/fix-admin.js. That script sets:
+    role = 'Admin'
+...but the database's role column is an ENUM that only accepts
+'SUPER_ADMIN', 'TECH_ADMIN', or 'EMPLOYEE'. If that script was
+ever run against your database, your admin account's role got
+set to the string "Admin" — which matches neither check in
+App.jsx, so you were silently routed to the employee dashboard.
+
+FIXED:
+  - backend/fix-admin.js now sets role = 'SUPER_ADMIN' (correct
+    enum value), and also forces email_verified = TRUE.
+  - backend/db/init.js now self-heals on every server startup:
+    if the seeded admin account's role isn't SUPER_ADMIN, it's
+    automatically corrected and a warning is logged. This means
+    even if it happens again (or happened in the past), simply
+    restarting your backend will fix it.
+
+If you're still stuck on an old broken row, you can also just run:
+    cd backend && node fix-admin.js
+
+───────────────────────────────────────────────────────────────
+2. CRITICAL BUG: routes/tickets.js was written for MySQL, not
+   PostgreSQL — this would have broken ticket creation/loading
+───────────────────────────────────────────────────────────────
+Your project uses the `pg` package (PostgreSQL) everywhere else
+(auth.js, admin.js, db/init.js all use $1/$2 placeholders and
+`.rows`). But routes/tickets.js was using MySQL syntax:
+  - `?` placeholders instead of `$1, $2...`
+  - `const [rows] = await pool.query(...)` destructuring, which
+    only works with mysql2's array-style return value — pg
+    returns a plain result object ({ rows: [...] }), so this
+    would throw "is not iterable" at runtime.
+  - `result.insertId` (MySQL-only) instead of `RETURNING *` /
+    `RETURNING id` (the Postgres equivalent)
+  - Role checks against the string 'Admin' instead of the real
+    enum values 'SUPER_ADMIN' / 'TECH_ADMIN'
+
+This means: submitting a ticket, viewing "My Tickets", posting
+comments, and viewing per-ticket activity logs would all have
+thrown 500 errors.
+
+FIXED: routes/tickets.js has been fully rewritten using correct
+`pg` syntax and correct role checks.
+
+Also fixed the same destructuring bug in routes/admin.js (the
+triage-queue query on line 23 used `const [rows] = ...` too).
+
+───────────────────────────────────────────────────────────────
+3. LOGO — now actually wired up
+───────────────────────────────────────────────────────────────
+AuthPage.jsx previously only had the hardcoded "P5" text badge —
+LOGO_GUIDE.md described how to add an <img> tag, but that step
+was never applied to the file.
+
+FIXED: AuthPage.jsx now renders <img src="/logo.png" ... /> with
+an onError fallback that reveals the "P5" badge if no logo file
+is present. Matching CSS (.auth-logo-img) was added to index.css.
+
+TO USE: drop your logo file at
+    pillar5-ticket-system/public/logo.png
+and restart the dev server. No other code changes needed —
+LOGO_GUIDE.md is still accurate for sizing/format guidance.
+
+───────────────────────────────────────────────────────────────
+4. FORGOT PASSWORD — link wasn't actually on the login page
+───────────────────────────────────────────────────────────────
+App.jsx already passed an `onForgotPassword` prop to AuthPage,
+and ForgotPasswordPage.jsx / ResetPasswordPage.jsx / the backend
+endpoints all already existed and worked — but AuthPage.jsx never
+accepted or used that prop, so there was no way to actually reach
+the forgot-password screen from the UI.
+
+FIXED: AuthPage.jsx now accepts `onForgotPassword` and renders a
+"Forgot password?" link under the password field on the login tab.
+
+Also fixed: ResetPasswordPage.jsx was validating passwords at a
+6-character minimum client-side, while the backend requires 8 —
+so a password that passed the frontend check could still get
+rejected by the API. Both now require 8 characters.
+
+───────────────────────────────────────────────────────────────
+5. TECH_ADMIN (IT Support) — same interface, restricted actions
+───────────────────────────────────────────────────────────────
+Your backend (routes/admin.js) already correctly enforced these
+rules server-side:
+  - Cannot assign tickets (403 if attempted)
+  - Cannot escalate priority above its current level (403)
+  - Cannot export the audit-log CSV (verifyAdminOnly middleware)
+
+...but the frontend UI didn't reflect any of this — a TECH_ADMIN
+user would see fully-enabled controls that silently failed (or
+threw unhandled 403s) when clicked.
+
+FIXED (frontend, matches backend 1:1):
+  - TicketDetail.jsx: the "Assigned To" dropdown is now disabled
+    for TECH_ADMIN. The "Priority" dropdown only allows selecting
+    the current priority or lower (escalating is disabled).
+  - TicketQueue.jsx: the "Export CSV" button is now hidden
+    entirely for TECH_ADMIN.
+  - TicketDetail.jsx: the "Audit Trail" tab (per-ticket activity
+    log) is now hidden for TECH_ADMIN, since "cannot access audit
+    logs" was one of the stated restrictions.
+
+FIXED (backend, defense in depth):
+  - GET /api/tickets/:id/logs now also returns 403 for TECH_ADMIN,
+    so the audit-log restriction can't be bypassed by calling the
+    API directly even if the UI is hidden.
+
+RESULT — TECH_ADMIN sees the exact same admin dashboard as
+SUPER_ADMIN (triage queue, KPIs, ticket detail, chat), and can:
+  ✓ View the triage queue
+  ✓ Update ticket status
+  ✓ Respond to tickets (public replies + internal notes)
+  ✗ Cannot assign tickets (dropdown disabled)
+  ✗ Cannot escalate priority (locked to current level or lower)
+  ✗ Cannot access audit logs (tab hidden, endpoint blocked)
+
+───────────────────────────────────────────────────────────────
+6. MINOR CLEANUP
+───────────────────────────────────────────────────────────────
+  - AuthPage.jsx: email placeholder was still "name@pillar5.com"
+    (wrong domain) — corrected to "name@pillar5group.co.za".
+  - AuthPage.jsx: register button said "Create Account & Verify
+    Email", left over from before email verification was removed
+    in v2.3. Now just says "Create Account".
+  - Added .auth-link CSS class (was referenced by
+    ForgotPasswordPage.jsx's "Back to Login" button but never
+    defined, so it was rendering completely unstyled).
+
+───────────────────────────────────────────────────────────────
+FILES CHANGED IN THIS UPDATE
+───────────────────────────────────────────────────────────────
+Backend:
+  backend/routes/tickets.js      (rewritten for PostgreSQL)
+  backend/routes/admin.js        (fixed pg destructuring bug)
+  backend/fix-admin.js           (fixed role value bug)
+  backend/db/init.js             (added self-healing admin role)
+
+Frontend:
+  src/pages/AuthPage.jsx         (logo + forgot password wiring)
+  src/pages/ResetPasswordPage.jsx (8-char password minimum)
+  src/pages/AdminPage.jsx        (pass user prop to TicketQueue)
+  src/components/admin/TicketQueue.jsx  (hide export for TECH_ADMIN)
+  src/components/admin/TicketDetail.jsx (restrict assign/escalate/audit)
+  src/index.css                  (logo, forgot-link, auth-link styles)
+
+Office zone (Call Center vs IT Department) was already correctly
+set in the v2.3 package you had — no changes needed there.
+
+───────────────────────────────────────────────────────────────
+WHAT YOU NEED TO DO
+───────────────────────────────────────────────────────────────
+1. Replace your project folder with this one (or copy the
+   changed files listed above over your existing project).
+2. If your local database already has a corrupted admin role,
+   either restart your backend (it self-heals now) or run:
+       cd backend && node fix-admin.js
+3. Drop your logo file at public/logo.png and restart the dev
+   server to see it on the login page.
+4. npm install in both the root and backend/ folders (fresh
+   node_modules were stripped from this package to keep it small).
+5. Test:
+   - Login as SUPER_ADMIN → should land on admin dashboard
+   - Submit a ticket as an employee → should succeed (previously
+     would have 500'd)
+   - Login/register as TECH_ADMIN → same dashboard, but Assign
+     dropdown disabled, Priority capped, Export hidden, Audit
+     Trail tab hidden
+   - Click "Forgot password?" on login → should work end to end

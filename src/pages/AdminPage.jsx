@@ -88,6 +88,7 @@ export default function AdminPage({ user }) {
           onRefresh={fetchAll}
           onExport={handleExport}
           loading={loading}
+          user={user}
         />
         <TicketDetail
           ticket={selected}
