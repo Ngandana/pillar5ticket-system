@@ -54,9 +54,25 @@ router.post('/register', async (req, res) => {
       [name.trim(), emailLower, hashed, normalizedRole]
     );
 
+    const dbUser = result.rows[0];
+    const token = makeJWT({
+      id: dbUser.id,
+      role: dbUser.role,
+      name: dbUser.name,
+    });
+
+    const user = {
+      id: dbUser.id,
+      name: dbUser.name,
+      email: dbUser.email,
+      role: dbUser.role,
+    };
+
     res.status(201).json({
       message: 'Account created successfully! You can now log in.',
       email: emailLower,
+      token,
+      user,
     });
   } catch (err) {
     console.error('[Register]', err);
