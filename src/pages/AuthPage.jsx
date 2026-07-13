@@ -27,16 +27,12 @@ export default function AuthPage({ onSuccess, onForgotPassword }) {
     setError('');
     setLoading(true);
     try {
-      const body = mode === 'login'
-        ? { email, password }
-        : { name, email, password, role };
-      
-      const data = await api.post(`/auth/${mode}`, body);
-      
       if (mode === 'register') {
-        // Auto-login after registration
-        onSuccess(data.user, data.token);
+        await api.post('/auth/register', { name, email, password, role });
+        const loginData = await api.post('/auth/login', { email, password });
+        onSuccess(loginData.user, loginData.token);
       } else {
+        const data = await api.post('/auth/login', { email, password });
         onSuccess(data.user, data.token);
       }
     } catch (err) {
