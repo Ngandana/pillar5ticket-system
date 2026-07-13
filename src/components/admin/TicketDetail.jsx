@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import { ShieldAlert, Activity, MessageSquare } from 'lucide-react';
 import { PriorityBadge, StatusBadge } from '../shared/Badge';
 import { relativeTime, fullDate, imageUrl } from '../../lib/utils';
+import { isAdminRole, normalizeRole } from '../../lib/roles';
 import { api } from '../../lib/api';
 
 const PRIORITY_RANK = { Low: 1, Medium: 2, High: 3, Critical: 4 };
@@ -18,7 +19,7 @@ export default function TicketDetail({ ticket, user, techs, onTicketUpdate }) {
   const [isInternal,  setIsInternal]  = useState(false);
   const chatEndRef = useRef(null);
 
-  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+  const isSuperAdmin = normalizeRole(user?.role) === 'SUPER_ADMIN';
 
   // Fetch comments + logs whenever the selected ticket changes
   useEffect(() => {
@@ -193,7 +194,7 @@ export default function TicketDetail({ ticket, user, techs, onTicketUpdate }) {
             ) : comments.map(c => (
               <div
                 key={c.id}
-                className={`comment ${c.is_internal ? 'comment--internal' : c.author_role === 'Admin' ? 'comment--admin' : 'comment--employee'}`}
+                className={`comment ${c.is_internal ? 'comment--internal' : isAdminRole(c.author_role) ? 'comment--admin' : 'comment--employee'}`}
               >
                 <div className="comment-header">
                   <span className="comment-author">

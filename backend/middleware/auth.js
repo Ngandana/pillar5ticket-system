@@ -3,6 +3,7 @@
  * JWT verification with tiered role-based access
  */
 const jwt = require('jsonwebtoken');
+const { normalizeRole, isAdminRole } = require('../lib/roles');
 
 const verifyToken = (req, res, next) => {
   const auth  = req.headers['authorization'];
@@ -11,7 +12,7 @@ const verifyToken = (req, res, next) => {
 
   jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
     if (err) return res.status(403).json({ message: 'Token invalid or expired.' });
-    req.user = decoded;
+    req.user = { ...decoded, role: normalizeRole(decoded.role) };
     next();
   });
 };
@@ -19,7 +20,7 @@ const verifyToken = (req, res, next) => {
 // Only SUPER_ADMIN or TECH_ADMIN can access
 const verifySuperAdmin = (req, res, next) => {
   verifyToken(req, res, () => {
-    if (req.user.role === 'SUPER_ADMIN') return next();
+    if (isAdminRole(req.user.role)) return next();
     res.status(403).json({ message: 'Super admin access required.' });
   });
 };
@@ -35,7 +36,7 @@ const verifyAdminOnly = (req, res, next) => {
 // TECH_ADMIN or higher
 const verifyTechAdmin = (req, res, next) => {
   verifyToken(req, res, () => {
-    if (['SUPER_ADMIN', 'TECH_ADMIN'].includes(req.user.role)) return next();
+    if (isAdminRole(req.user.role)) return next();
     res.status(403).json({ message: 'Admin access required.' });
   });
 };

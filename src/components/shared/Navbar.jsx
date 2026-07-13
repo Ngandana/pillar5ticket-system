@@ -3,9 +3,11 @@
  * Top navigation bar — shows logo, current user, and logout button.
  */
 import { LogOut, Shield, User } from 'lucide-react';
+import { isAdminRole, normalizeRole } from '../../lib/roles';
 
 export default function Navbar({ user, onLogout }) {
-  const isAdmin = user?.role === 'Admin';
+  const isAdmin = isAdminRole(user?.role);
+  const roleLabel = normalizeRole(user?.role) || user?.role;
 
   return (
     <nav className="navbar">
@@ -29,7 +31,7 @@ export default function Navbar({ user, onLogout }) {
             <div className={`navbar-user-dot ${isAdmin ? 'dot--admin' : 'dot--employee'}`} />
             {isAdmin ? <Shield size={13} /> : <User size={13} />}
             <span className="navbar-user-name">{user?.name}</span>
-            <span className="navbar-role-badge">{user?.role}</span>
+              <span className="navbar-role-badge">{roleLabel}</span>
           </div>
           <button className="navbar-logout" onClick={onLogout} title="Sign out">
             <LogOut size={15} />

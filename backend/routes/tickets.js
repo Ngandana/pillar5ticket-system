@@ -6,6 +6,7 @@
 const router = require('express').Router();
 const { pool }        = require('../db/init');
 const { verifyToken } = require('../middleware/auth');
+const { normalizeRole, isAdminRole } = require('../lib/roles');
 const upload          = require('../middleware/upload');
 
 const ADMIN_ROLES = ['SUPER_ADMIN', 'TECH_ADMIN'];
@@ -81,7 +82,7 @@ router.put('/:id/withdraw', verifyToken, async (req, res) => {
     if (result.rows.length === 0) return res.status(404).json({ message: 'Ticket not found.' });
 
     const ticket = result.rows[0];
-    if (ticket.user_id !== req.user.id && !ADMIN_ROLES.includes(req.user.role))
+    if (ticket.user_id !== req.user.id && !isAdminRole(req.user.role))
       return res.status(403).json({ message: 'You can only withdraw your own tickets.' });
 
     await pool.query(
@@ -99,7 +100,7 @@ router.put('/:id/withdraw', verifyToken, async (req, res) => {
 router.get('/:id/comments', verifyToken, async (req, res) => {
   try {
     // Employees only see public comments; admins (SUPER_ADMIN/TECH_ADMIN) see all
-    const isAdmin = ADMIN_ROLES.includes(req.user.role);
+    const isAdmin = isAdminRole(req.user.role);
     const filter  = isAdmin ? '' : 'AND c.is_internal = FALSE';
     const result  = await pool.query(
       `SELECT c.*, u.name AS author_name, u.role AS author_role
@@ -121,7 +122,7 @@ router.post('/:id/comments', verifyToken, async (req, res) => {
     const { content, isInternal } = req.body;
     if (!content?.trim()) return res.status(400).json({ message: 'Comment cannot be empty.' });
 
-    const internal = ADMIN_ROLES.includes(req.user.role) && Boolean(isInternal);
+    const internal = isAdminRole(req.user.role) && Boolean(isInternal);
 
     const inserted = await pool.query(
       'INSERT INTO comments (ticket_id, user_id, content, is_internal) VALUES ($1, $2, $3, $4) RETURNING id',
@@ -144,7 +145,7 @@ router.post('/:id/comments', verifyToken, async (req, res) => {
 router.get('/:id/logs', verifyToken, async (req, res) => {
   try {
     // TECH_ADMIN cannot access audit logs (same restriction as CSV export)
-    if (req.user.role === 'TECH_ADMIN')
+    if (normalizeRole(req.user.role) === 'TECH_ADMIN')
       return res.status(403).json({ message: 'Audit logs are restricted to super admins.' });
 
     const result = await pool.query(

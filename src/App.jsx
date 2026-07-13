@@ -4,6 +4,7 @@
  */
 import { useState } from 'react';
 import { useAuth } from './hooks/useAuth';
+import { isAdminRole } from './lib/roles';
 import Navbar from './components/shared/Navbar';
 import AuthPage from './pages/AuthPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
@@ -53,7 +54,7 @@ export default function App() {
   // Authenticated - route based on ROLE
   // SUPER_ADMIN and TECH_ADMIN both go to admin dashboard
   // EMPLOYEE goes to employee dashboard
-  const isAdmin = user.role === 'SUPER_ADMIN' || user.role === 'TECH_ADMIN';
+  const isAdmin = isAdminRole(user.role);
   
   return (
     <div className="app-shell">

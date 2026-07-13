@@ -3,6 +3,10 @@
  * Auth state: persists token + user in localStorage, exposes login/logout.
  */
 import { useState, useEffect } from 'react';
+import { normalizeRole } from '../lib/roles';
+
+const normalizeUser = (userData) =>
+  userData ? { ...userData, role: normalizeRole(userData.role) } : userData;
 
 export function useAuth() {
   const [user,  setUser]  = useState(null);
@@ -16,17 +20,18 @@ export function useAuth() {
       const savedUser  = localStorage.getItem('p5_user');
       if (savedToken && savedUser) {
         setToken(savedToken);
-        setUser(JSON.parse(savedUser));
+        setUser(normalizeUser(JSON.parse(savedUser)));
       }
     } catch (_) {}
     setReady(true);
   }, []);
 
   const login = (userData, tok) => {
-    setUser(userData);
+    const normalizedUser = normalizeUser(userData);
+    setUser(normalizedUser);
     setToken(tok);
     localStorage.setItem('p5_token', tok);
-    localStorage.setItem('p5_user', JSON.stringify(userData));
+    localStorage.setItem('p5_user', JSON.stringify(normalizedUser));
   };
 
   const logout = () => {

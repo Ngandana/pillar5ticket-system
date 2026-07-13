@@ -7,6 +7,7 @@
 const router = require('express').Router();
 const { pool }            = require('../db/init');
 const { verifySuperAdmin, verifyAdminOnly, verifyTechAdmin } = require('../middleware/auth');
+const { normalizeRole } = require('../lib/roles');
 
 const logActivity = async (ticketId, userName, action) => {
   try {
@@ -83,7 +84,7 @@ router.put('/tickets/:id', verifyTechAdmin, async (req, res) => {
   try {
     const { status, priority, assigned_to } = req.body;
     const ticketId = req.params.id;
-    const isSuperAdmin = req.user.role === 'SUPER_ADMIN';
+    const isSuperAdmin = normalizeRole(req.user.role) === 'SUPER_ADMIN';
 
     const current = await pool.query('SELECT * FROM tickets WHERE id = $1', [ticketId]);
     if (current.rows.length === 0) return res.status(404).json({ message: 'Ticket not found.' });

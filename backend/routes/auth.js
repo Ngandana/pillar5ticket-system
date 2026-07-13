@@ -6,6 +6,7 @@ const router = require('express').Router();
 const bcrypt = require('bcrypt');
 const jwt    = require('jsonwebtoken');
 const { pool } = require('../db/init');
+const { normalizeRole } = require('../lib/roles');
 const {
   generateVerificationToken,
   sendPasswordResetEmail,
@@ -25,11 +26,12 @@ const makeJWT = (payload) =>
 router.post('/register', async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
+    const normalizedRole = normalizeRole(role);
 
     if (!name?.trim() || !email?.trim() || !password)
       return res.status(400).json({ message: 'Name, email, and password are required.' });
 
-    if (!['EMPLOYEE', 'TECH_ADMIN'].includes(role))
+    if (!['EMPLOYEE', 'TECH_ADMIN'].includes(normalizedRole))
       return res.status(400).json({ message: 'Invalid role selected.' });
 
     const emailLower = email.toLowerCase().trim();
@@ -49,7 +51,7 @@ router.post('/register', async (req, res) => {
     const hashed = await bcrypt.hash(password, 12);
     const result = await pool.query(
       'INSERT INTO users (name, email, password, role, email_verified, verified_at) VALUES ($1, $2, $3, $4, TRUE, CURRENT_TIMESTAMP) RETURNING id, name, email, role',
-      [name.trim(), emailLower, hashed, role]
+      [name.trim(), emailLower, hashed, normalizedRole]
     );
 
     res.status(201).json({
@@ -78,6 +80,7 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'Invalid email or password.' });
 
     const dbUser = result.rows[0];
+    const normalizedRole = normalizeRole(dbUser.role);
 
     const valid = await bcrypt.compare(password, dbUser.password);
     if (!valid)
@@ -86,7 +89,7 @@ router.post('/login', async (req, res) => {
     // IMPORTANT: Include role in JWT token
     const token = makeJWT({ 
       id: dbUser.id, 
-      role: dbUser.role,  // ← MAKE SURE ROLE IS HERE
+      role: normalizedRole,
       name: dbUser.name 
     });
 
@@ -95,7 +98,7 @@ router.post('/login', async (req, res) => {
       id: dbUser.id,
       name: dbUser.name,
       email: dbUser.email,
-      role: dbUser.role,  // ← MAKE SURE ROLE IS HERE
+      role: normalizedRole,
     };
 
     res.json({ token, user });
