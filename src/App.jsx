@@ -1,6 +1,6 @@
 /**
  * App.jsx — Root component
- * Auth state management + route handling
+ * FIXED: Proper role-based routing for SUPER_ADMIN, TECH_ADMIN, EMPLOYEE
  */
 import { useState } from 'react';
 import { useAuth } from './hooks/useAuth';
@@ -13,10 +13,10 @@ import EmployeePage from './pages/EmployeePage';
 
 export default function App() {
   const { user, ready, login, logout } = useAuth();
-  const [authMode, setAuthMode] = useState('login'); // login, forgot, reset
+  const [authMode, setAuthMode] = useState('login');
   const location = window.location.pathname;
   
-  // Extract reset password token from URL: /reset-password/:token
+  // Extract reset password token
   const resetMatch = location.match(/^\/reset-password\/(.+)$/);
   const resetToken = resetMatch ? resetMatch[1] : null;
 
@@ -32,7 +32,7 @@ export default function App() {
     );
   }
 
-  // Not authenticated
+  // Not authenticated - show auth pages
   if (!user) {
     if (authMode === 'forgot') {
       return (
@@ -50,13 +50,15 @@ export default function App() {
     );
   }
 
-  // Authenticated
+  // Authenticated - route based on ROLE
+  // SUPER_ADMIN and TECH_ADMIN both go to admin dashboard
+  // EMPLOYEE goes to employee dashboard
+  const isAdmin = user.role === 'SUPER_ADMIN' || user.role === 'TECH_ADMIN';
+  
   return (
     <div className="app-shell">
       <Navbar user={user} onLogout={logout} />
-      {['SUPER_ADMIN', 'TECH_ADMIN'].includes(user.role)
-        ? <AdminPage user={user} />
-        : <EmployeePage user={user} />}
+      {isAdmin ? <AdminPage user={user} /> : <EmployeePage user={user} />}
     </div>
   );
 }
