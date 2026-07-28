@@ -22,10 +22,10 @@
   --accent:    #c9932e;
   --accent-2:  #101d3d;
   --accent-glow: rgba(201,147,46,0.22);
-  --radius-sm: 0px;
-  --radius-md: 0px;
-  --radius-lg: 0px;
-  --radius-xl: 0px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
   --shadow:    0 4px 20px rgba(16,29,61,0.10);
 }
 
@@ -82,7 +82,7 @@ button { cursor: pointer; border: none; background: none; }
 }
 .navbar-brand { display: flex; align-items: center; gap: 12px; }
 .navbar-logo {
-  width: 32px; height: 32px; border-radius: 0;
+  width: 32px; height: 32px; border-radius: 8px;
   background: linear-gradient(135deg, #c9932e, #101d3d);
   display: flex; align-items: center; justify-content: center;
   box-shadow: 0 2px 12px rgba(201,147,46,0.4);
@@ -105,7 +105,7 @@ button { cursor: pointer; border: none; background: none; }
 .navbar-user-name { color: var(--text-muted); font-size: 12px; font-weight: 600; }
 .navbar-role-badge {
   background: var(--bg); color: var(--text-dim);
-  font-size: 10px; padding: 1px 7px; border-radius: 0;
+  font-size: 10px; padding: 2px 9px; border-radius: 999px;
 }
 .navbar-logout {
   display: flex; align-items: center; gap: 6px;
@@ -120,7 +120,7 @@ button { cursor: pointer; border: none; background: none; }
 .badge {
   display: inline-block;
   font-size: 10px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.4px; padding: 2px 8px; border-radius: 0;
+  letter-spacing: 0.4px; padding: 2px 9px; border-radius: 999px;
   line-height: 1.4; white-space: nowrap;
 }
 
@@ -224,7 +224,7 @@ button { cursor: pointer; border: none; background: none; }
   display: flex; align-items: center; gap: 14px;
 }
 .kpi-icon {
-  width: 40px; height: 40px; border-radius: 0;
+  width: 40px; height: 40px; border-radius: 8px;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .kpi-label { color: var(--text-dim); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -244,7 +244,7 @@ button { cursor: pointer; border: none; background: none; }
 .queue-actions { display: flex; gap: 6px; }
 .icon-btn {
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: 0; padding: 5px 9px; color: var(--text-dim);
+  border-radius: 8px; padding: 5px 9px; color: var(--text-dim);
   display: flex; align-items: center; gap: 4px; font-size: 11px;
   transition: color 0.15s, border-color 0.15s;
 }
@@ -254,14 +254,14 @@ button { cursor: pointer; border: none; background: none; }
 .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-dim); }
 .search-input {
   width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border);
-  border-radius: 0; padding: 7px 10px 7px 30px; color: var(--text-muted);
+  border-radius: 8px; padding: 7px 10px 7px 30px; color: var(--text-muted);
   font-size: 12px; outline: none;
 }
 .search-input:focus { border-color: var(--accent); }
 .filter-row { display: flex; gap: 6px; }
 .filter-select {
   flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--border);
-  border-radius: 0; padding: 5px 6px; color: var(--text-muted);
+  border-radius: 8px; padding: 5px 6px; color: var(--text-muted);
   font-size: 11px; outline: none; cursor: pointer;
 }
 .filter-select option { background: var(--surface); }
@@ -312,7 +312,7 @@ button { cursor: pointer; border: none; background: none; }
 .ctrl-label { font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
 .ctrl-select {
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: 0; padding: 6px 10px; color: var(--text);
+  border-radius: 8px; padding: 6px 10px; color: var(--text);
   font-size: 12px; font-weight: 600; outline: none; cursor: pointer; width: 100%;
 }
 .ctrl-select option { background: var(--surface); }
@@ -320,11 +320,11 @@ button { cursor: pointer; border: none; background: none; }
 .ctrl-select--primary option { background: var(--surface); color: var(--text); }
 .detail-description {
   background: rgba(255,255,255,0.04); border: 1px solid var(--border);
-  border-radius: 0; padding: 12px 14px; font-size: 13px; color: var(--text-muted);
+  border-radius: 8px; padding: 12px 14px; font-size: 13px; color: var(--text-muted);
   margin-bottom: 10px;
 }
 .detail-image {
-  max-height: 160px; border-radius: 0; border: 1px solid var(--border);
+  max-height: 160px; border-radius: 8px; border: 1px solid var(--border);
   object-fit: cover; cursor: pointer; margin-top: 4px;
   transition: opacity 0.15s;
 }
@@ -365,7 +365,7 @@ button { cursor: pointer; border: none; background: none; }
 .comment-body { color: var(--text); margin: 0; }
 .internal-badge {
   background: rgba(245,158,11,0.3); color: #fbbf24;
-  font-size: 9px; padding: 1px 6px; border-radius: 0;
+  font-size: 9px; padding: 1px 6px; border-radius: 999px;
   margin-left: 8px; font-weight: 800;
 }
 
@@ -382,7 +382,7 @@ button { cursor: pointer; border: none; background: none; }
 .comment-form { display: flex; flex-direction: column; gap: 8px; }
 .comment-input {
   width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border);
-  border-radius: 0; padding: 10px 14px; color: var(--text);
+  border-radius: 8px; padding: 10px 14px; color: var(--text);
   font-size: 13px; resize: none; outline: none;
 }
 .comment-input:focus { border-color: var(--accent); }
@@ -390,7 +390,7 @@ button { cursor: pointer; border: none; background: none; }
 .internal-toggle { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-dim); cursor: pointer; }
 .internal-toggle input { accent-color: #f59e0b; width: 14px; height: 14px; }
 .btn-submit {
-  background: var(--accent); border-radius: 0;
+  background: var(--accent); border-radius: 8px;
   padding: 8px 20px; color: #fff; font-weight: 600; font-size: 13px;
   transition: opacity 0.15s;
 }
@@ -413,7 +413,7 @@ button { cursor: pointer; border: none; background: none; }
 /* Success toast */
 .success-toast {
   background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3);
-  border-radius: 0; padding: 12px 16px; margin-bottom: 16px;
+  border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;
   color: #34d399; font-size: 13px;
 }
 
@@ -430,9 +430,12 @@ button { cursor: pointer; border: none; background: none; }
 }
 .issue-card:hover { border-color: var(--text-dim); background: rgba(255,255,255,0.06); }
 .issue-card--active { border-color: var(--accent) !important; background: rgba(201,147,46,0.08) !important; }
-.issue-emoji { font-size: 28px; }
+.issue-icon {
+  width: 44px; height: 44px; border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+}
 .issue-title { font-weight: 700; font-size: 13px; color: var(--text); text-align: center; }
-.issue-priority { font-size: 10px; padding: 2px 9px; border-radius: 0; font-weight: 700; }
+.issue-priority { font-size: 10px; padding: 2px 9px; border-radius: 999px; font-weight: 700; }
 
 /* Sub panel */
 .sub-panel {
@@ -443,13 +446,13 @@ button { cursor: pointer; border: none; background: none; }
 .sub-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
 .sub-pill {
   background: rgba(255,255,255,0.04); border: 1px solid var(--border);
-  border-radius: 0; padding: 7px 14px; color: var(--text-muted);
+  border-radius: 999px; padding: 7px 14px; color: var(--text-muted);
   font-size: 12px; transition: all 0.15s;
 }
 .sub-pill:hover { border-color: var(--text-dim); color: var(--text); }
 .sub-pill--active { background: rgba(201,147,46,0.15); border-color: var(--accent); color: #101d3d; }
 .btn-next {
-  background: var(--accent); border-radius: 0; padding: 9px 24px;
+  background: var(--accent); border-radius: 8px; padding: 9px 24px;
   color: #fff; font-weight: 700; font-size: 13px;
   transition: opacity 0.15s;
 }
@@ -463,7 +466,7 @@ button { cursor: pointer; border: none; background: none; }
 }
 .form-breadcrumb { display: flex; align-items: center; gap: 12px; }
 .btn-back {
-  background: var(--border); border-radius: 0; padding: 6px 12px;
+  background: var(--border); border-radius: 8px; padding: 6px 12px;
   color: var(--text-muted); font-size: 12px; font-weight: 600;
   transition: color 0.15s;
 }
@@ -479,7 +482,7 @@ button { cursor: pointer; border: none; background: none; }
 .optional { color: var(--text-dim); font-weight: 400; text-transform: none; font-size: 11px; }
 .form-select, .form-input, .form-textarea {
   background: rgba(255,255,255,0.05); border: 1px solid var(--border);
-  border-radius: 0; padding: 9px 12px; color: var(--text);
+  border-radius: 8px; padding: 9px 12px; color: var(--text);
   font-size: 13px; outline: none; width: 100%;
   transition: border-color 0.15s;
 }
@@ -490,12 +493,12 @@ button { cursor: pointer; border: none; background: none; }
 .upload-zone {
   display: flex; align-items: center; gap: 10px;
   background: rgba(255,255,255,0.04); border: 1px dashed var(--border);
-  border-radius: 0; padding: 12px 16px; cursor: pointer; color: var(--text-dim); font-size: 13px;
+  border-radius: 8px; padding: 12px 16px; cursor: pointer; color: var(--text-dim); font-size: 13px;
   transition: border-color 0.15s;
 }
 .upload-zone:hover { border-color: var(--text-dim); }
 .image-preview-wrapper { position: relative; display: inline-block; margin-top: 8px; }
-.image-preview { max-height: 120px; border-radius: 0; border: 1px solid var(--border); }
+.image-preview { max-height: 120px; border-radius: 8px; border: 1px solid var(--border); }
 .image-clear {
   position: absolute; top: -6px; right: -6px;
   background: #ef4444; border-radius: 50%; width: 20px; height: 20px;
@@ -504,7 +507,7 @@ button { cursor: pointer; border: none; background: none; }
 .form-actions { display: flex; justify-content: flex-end; padding-top: 8px; border-top: 1px solid var(--border); }
 .btn-primary {
   background: linear-gradient(135deg, #c9932e, #101d3d);
-  border-radius: 0; padding: 11px 28px; color: #fff;
+  border-radius: 8px; padding: 11px 28px; color: #fff;
   font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px;
   transition: opacity 0.15s;
 }
@@ -525,7 +528,7 @@ button { cursor: pointer; border: none; background: none; }
 .my-tickets-title { color: var(--text); font-weight: 700; font-size: 14px; }
 .my-tickets-count {
   background: rgba(201,147,46,0.15); color: #101d3d;
-  font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 0;
+  font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 999px;
 }
 .my-tickets-list { overflow-y: auto; flex: 1; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
 .my-tickets-empty { color: var(--text-dim); font-size: 13px; text-align: center; padding: 32px 16px; }
@@ -568,7 +571,7 @@ button { cursor: pointer; border: none; background: none; }
 .chat-sub      { font-size: 12px; color: var(--text-muted); }
 .btn-withdraw {
   background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2);
-  border-radius: 0; padding: 6px 12px; color: #f87171;
+  border-radius: 8px; padding: 6px 12px; color: #f87171;
   font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 5px;
   transition: background 0.15s;
 }
@@ -583,7 +586,7 @@ button { cursor: pointer; border: none; background: none; }
 }
 .chat-report-label { font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
 .chat-report-text  { font-size: 13px; color: var(--text-muted); }
-.chat-report-image { max-height: 140px; border-radius: 0; margin-top: 10px; border: 1px solid var(--border); cursor: pointer; }
+.chat-report-image { max-height: 140px; border-radius: 8px; margin-top: 10px; border: 1px solid var(--border); cursor: pointer; }
 .chat-waiting { text-align: center; color: var(--border); font-size: 13px; margin-top: 24px; }
 .chat-bubble { max-width: 78%; padding: 10px 14px; border-radius: var(--radius-md); font-size: 13px; line-height: 1.5; }
 .chat-bubble--self  { align-self: flex-end; background: rgba(201,147,46,0.2); border: 1px solid rgba(201,147,46,0.3); }
@@ -599,12 +602,12 @@ button { cursor: pointer; border: none; background: none; }
 .chat-form { display: flex; gap: 8px; }
 .chat-input {
   flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--border);
-  border-radius: 0; padding: 10px 14px; color: var(--text);
+  border-radius: 8px; padding: 10px 14px; color: var(--text);
   font-size: 13px; outline: none;
 }
 .chat-input:focus { border-color: var(--accent); }
 .chat-send {
-  background: var(--accent); border-radius: 0; padding: 10px 20px;
+  background: var(--accent); border-radius: 8px; padding: 10px 20px;
   color: #fff; font-weight: 700; font-size: 13px; transition: opacity 0.15s;
 }
 .chat-send:hover { opacity: 0.85; }
@@ -629,13 +632,13 @@ button { cursor: pointer; border: none; background: none; }
 .admin-error {
   background: rgba(239,68,68,0.12);
   border: 1px solid rgba(239,68,68,0.3);
-  border-radius: 0; padding: 12px 16px;
+  border-radius: 8px; padding: 12px 16px;
   color: #fca5a5; font-size: 13px;
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
 }
 .admin-error-retry {
   background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.4);
-  border-radius: 0; padding: 4px 12px; color: #fca5a5;
+  border-radius: 8px; padding: 4px 12px; color: #fca5a5;
   font-size: 12px; font-weight: 600; cursor: pointer;
   transition: background 0.15s;
 }
@@ -651,7 +654,7 @@ button { cursor: pointer; border: none; background: none; }
 .role-option {
   background: rgba(255,255,255,0.04);
   border: 2px solid var(--border);
-  border-radius: 0;
+  border-radius: 8px;
   padding: 16px;
   cursor: pointer;
   display: flex;
@@ -745,7 +748,7 @@ button { cursor: pointer; border: none; background: none; }
 }
 .verify-btn {
   background: var(--accent);
-  border-radius: 0;
+  border-radius: 8px;
   padding: 11px 28px;
   color: #fff;
   font-weight: 700;
@@ -778,7 +781,7 @@ button { cursor: pointer; border: none; background: none; }
 .check-email-addr {
   background: rgba(201,147,46,0.1);
   border: 1px solid rgba(201,147,46,0.2);
-  border-radius: 0;
+  border-radius: 8px;
   padding: 12px;
   margin: 16px 0;
   font-family: 'JetBrains Mono', monospace;
@@ -791,7 +794,7 @@ button { cursor: pointer; border: none; background: none; }
 }
 .btn-back-login {
   background: var(--accent);
-  border-radius: 0;
+  border-radius: 8px;
   padding: 10px 24px;
   color: #fff;
   font-weight: 700;
@@ -815,7 +818,7 @@ button { cursor: pointer; border: none; background: none; }
   width: 100px;
   height: 100px;
   margin-bottom: 20px;
-  border-radius: 0;
+  border-radius: 8px;
   object-fit: contain;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
   display: block;
@@ -826,7 +829,7 @@ button { cursor: pointer; border: none; background: none; }
   width: 100px;
   height: 100px;
   background: var(--accent);
-  border-radius: 0;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -867,7 +870,7 @@ button { cursor: pointer; border: none; background: none; }
 .role-option {
   background: rgba(255,255,255,0.04);
   border: 2px solid var(--border);
-  border-radius: 0;
+  border-radius: 8px;
   padding: 16px;
   cursor: pointer;
   display: flex;
@@ -968,7 +971,7 @@ button { cursor: pointer; border: none; background: none; }
   font-size: 12px;
   background: rgba(255,255,255,0.04);
   padding: 8px 12px;
-  border-radius: 0;
+  border-radius: 8px;
   margin: 12px 0;
 }
 
@@ -983,7 +986,7 @@ button { cursor: pointer; border: none; background: none; }
   border: 1px solid rgba(201,147,46,0.3);
   color: var(--accent);
   padding: 12px 24px;
-  border-radius: 0;
+  border-radius: 8px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;

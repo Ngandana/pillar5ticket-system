@@ -3,9 +3,10 @@
  * Full admin dashboard: KPI bar + ticket queue + ticket detail panel.
  */
 import { useState, useEffect, useCallback } from 'react';
-import KpiBar       from '../components/admin/KpiBar';
-import TicketQueue  from '../components/admin/TicketQueue';
-import TicketDetail from '../components/admin/TicketDetail';
+import KpiBar         from '../components/admin/KpiBar';
+import TicketQueue    from '../components/admin/TicketQueue';
+import TicketDetail   from '../components/admin/TicketDetail';
+import UserManagement from '../components/admin/UserManagement';
 import { api } from '../lib/api';
 
 export default function AdminPage({ user }) {
@@ -15,6 +16,8 @@ export default function AdminPage({ user }) {
   const [selected, setSelected] = useState(null);
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState('');
+  const [view,     setView]     = useState('tickets'); // 'tickets' | 'users'
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -80,23 +83,44 @@ export default function AdminPage({ user }) {
 
       <KpiBar stats={stats} />
 
-      <div className="admin-grid">
-        <TicketQueue
-          tickets={tickets}
-          selectedId={selected?.id}
-          onSelect={handleSelect}
-          onRefresh={fetchAll}
-          onExport={handleExport}
-          loading={loading}
-          user={user}
-        />
-        <TicketDetail
-          ticket={selected}
-          user={user}
-          techs={techs}
-          onTicketUpdate={handleTicketUpdate}
-        />
-      </div>
+      {isSuperAdmin && (
+        <div className="admin-view-tabs">
+          <button
+            className={`tab-btn ${view === 'tickets' ? 'tab-btn--active' : ''}`}
+            onClick={() => setView('tickets')}
+          >
+            Triage Queue
+          </button>
+          <button
+            className={`tab-btn ${view === 'users' ? 'tab-btn--active' : ''}`}
+            onClick={() => setView('users')}
+          >
+            User Management
+          </button>
+        </div>
+      )}
+
+      {view === 'users' && isSuperAdmin ? (
+        <UserManagement currentUser={user} />
+      ) : (
+        <div className="admin-grid">
+          <TicketQueue
+            tickets={tickets}
+            selectedId={selected?.id}
+            onSelect={handleSelect}
+            onRefresh={fetchAll}
+            onExport={handleExport}
+            loading={loading}
+            user={user}
+          />
+          <TicketDetail
+            ticket={selected}
+            user={user}
+            techs={techs}
+            onTicketUpdate={handleTicketUpdate}
+          />
+        </div>
+      )}
     </div>
   );
 }

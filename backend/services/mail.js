@@ -70,6 +70,16 @@ async function consumeToken(token, expectedType) {
   return user_id;
 }
 
+// ── Shared: escape user-supplied text before dropping it into HTML email ──
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // ── Shared HTML Email wrapper ─────────────────────────────────
 function emailWrapper(content) {
   return `
@@ -209,6 +219,31 @@ async function verifyPasswordToken(token) {
   return consumeToken(token, 'password_reset');
 }
 
+// ── Public: Ticket Assignment ──────────────────────────────────
+async function sendTicketAssignedEmail(email, techName, ticket) {
+  const html = emailWrapper(`
+    <h2 style="margin:0 0 16px;color:#1e3a5f;font-size:22px;">You've been assigned a ticket</h2>
+    <p style="color:#475569;margin:0 0 8px;">Hi <strong>${escapeHtml(techName)}</strong>,</p>
+    <p style="color:#475569;margin:0 0 24px;line-height:1.6;">
+      You've been assigned ticket <strong>${escapeHtml(ticket.ticket_ref)}</strong>
+      — ${escapeHtml(ticket.category)}${ticket.sub_category ? ' · ' + escapeHtml(ticket.sub_category) : ''},
+      priority <strong>${escapeHtml(ticket.priority)}</strong>.
+    </p>
+    ${ticket.details ? `
+    <p style="background:#f1f5f9;padding:12px;border-radius:6px;font-size:13px;color:#475569;margin:0 0 24px;white-space:pre-wrap;">
+      ${escapeHtml(ticket.details)}
+    </p>` : ''}
+    <div style="text-align:center;margin:32px 0;">
+      <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}"
+         style="background:#3b82f6;color:#fff;padding:14px 36px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;display:inline-block;">
+        Open Triage Queue
+      </a>
+    </div>
+  `);
+
+  return sendMail(email, `Ticket assigned: ${ticket.ticket_ref}`, html);
+}
+
 module.exports = {
   generateVerificationToken,
   sendVerificationEmail,
@@ -216,4 +251,5 @@ module.exports = {
   generatePasswordResetToken,
   sendPasswordResetEmail,
   verifyPasswordToken,
+  sendTicketAssignedEmail,
 };

@@ -2,7 +2,16 @@
  * components/employee/IssueGrid.jsx
  * Step 1 of the submission form — category card grid + sub-category pills.
  */
+import { Wifi, KeyRound, Bug, Monitor, HelpCircle } from 'lucide-react';
 import { ISSUE_CATALOGUE } from '../../lib/constants';
+
+const ISSUE_ICONS = {
+  network:  Wifi,
+  access:   KeyRound,
+  software: Bug,
+  hardware: Monitor,
+  other:    HelpCircle,
+};
 
 export default function IssueGrid({ selected, subCategory, onSelect, onSubSelect, onNext }) {
   return (
@@ -16,6 +25,7 @@ export default function IssueGrid({ selected, subCategory, onSelect, onSubSelect
       <div className="issue-grid">
         {ISSUE_CATALOGUE.map(issue => {
           const active = selected?.id === issue.id;
+          const Icon = ISSUE_ICONS[issue.id] || HelpCircle;
           return (
             <button
               key={issue.id}
@@ -23,7 +33,9 @@ export default function IssueGrid({ selected, subCategory, onSelect, onSubSelect
               className={`issue-card ${active ? 'issue-card--active' : ''}`}
               style={{ '--card-color': issue.color, '--card-bg': issue.bg }}
             >
-              <span className="issue-emoji">{issue.emoji}</span>
+              <span className="issue-icon" style={{ background: issue.bg, color: issue.color }}>
+                <Icon size={22} strokeWidth={2} />
+              </span>
               <span className="issue-title">{issue.title}</span>
               <span
                 className="issue-priority"

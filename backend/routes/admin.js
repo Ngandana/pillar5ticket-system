@@ -8,6 +8,7 @@ const router = require('express').Router();
 const { pool }            = require('../db/init');
 const { verifySuperAdmin, verifyAdminOnly, verifyTechAdmin } = require('../middleware/auth');
 const { normalizeRole } = require('../lib/roles');
+const { sendTicketAssignedEmail } = require('../services/mail');
 
 const logActivity = async (ticketId, userName, action) => {
   try {
@@ -79,6 +80,47 @@ router.get('/techs', verifyTechAdmin, async (req, res) => {
   }
 });
 
+// ── User Management (SUPER_ADMIN only) ──────────────────────
+router.get('/users', verifyAdminOnly, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, name, email, role, created_at FROM users ORDER BY name'
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/users/:id/role', verifyAdminOnly, async (req, res) => {
+  try {
+    const VALID_ROLES = ['SUPER_ADMIN', 'TECH_ADMIN', 'EMPLOYEE'];
+    const normalized  = normalizeRole(req.body.role);
+    if (!VALID_ROLES.includes(normalized))
+      return res.status(400).json({ message: 'Invalid role.' });
+
+    const targetId = Number(req.params.id);
+    if (targetId === req.user.id)
+      return res.status(400).json({ message: 'You cannot change your own role.' });
+
+    const current = await pool.query('SELECT id, name, role FROM users WHERE id = $1', [targetId]);
+    if (current.rows.length === 0)
+      return res.status(404).json({ message: 'User not found.' });
+
+    // Prevent demoting the last remaining super admin — would lock everyone out of admin management
+    if (current.rows[0].role === 'SUPER_ADMIN' && normalized !== 'SUPER_ADMIN') {
+      const superAdminCount = await pool.query("SELECT COUNT(*) AS count FROM users WHERE role = 'SUPER_ADMIN'");
+      if (Number(superAdminCount.rows[0].count) <= 1)
+        return res.status(400).json({ message: 'Cannot demote the last remaining super admin.' });
+    }
+
+    await pool.query('UPDATE users SET role = $1 WHERE id = $2', [normalized, targetId]);
+    res.json({ message: `${current.rows[0].name}'s role updated to ${normalized}.` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Update Ticket (SUPER_ADMIN only for assigning) ─────────
 router.put('/tickets/:id', verifyTechAdmin, async (req, res) => {
   try {
@@ -113,8 +155,25 @@ router.put('/tickets/:id', verifyTechAdmin, async (req, res) => {
       await logActivity(ticketId, req.user.name, `changed status to "${status}"`);
     if (old.priority !== priority)
       await logActivity(ticketId, req.user.name, `changed priority to "${priority}"`);
-    if (isSuperAdmin && String(old.assigned_to || '') !== String(assigned_to || ''))
+
+    const assignmentChanged = isSuperAdmin && String(old.assigned_to || '') !== String(assigned_to || '');
+    if (assignmentChanged) {
       await logActivity(ticketId, req.user.name, 'updated assignment');
+
+      // Notify the newly assigned technician (best-effort — a mail failure shouldn't fail the update)
+      if (assigned_to) {
+        try {
+          const assignee = await pool.query('SELECT name, email FROM users WHERE id = $1', [assigned_to]);
+          if (assignee.rows.length > 0) {
+            await sendTicketAssignedEmail(assignee.rows[0].email, assignee.rows[0].name, {
+              ...old, status, priority,
+            });
+          }
+        } catch (err) {
+          console.error('[AssignmentEmail]', err);
+        }
+      }
+    }
 
     res.json({ message: 'Ticket updated.' });
   } catch (err) {
