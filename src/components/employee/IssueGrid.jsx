@@ -28,8 +28,8 @@ export default function IssueGrid({ selected, subCategory, onSelect, onSubSelect
               <span
                 className="issue-priority"
                 style={{
-                  background: issue.priority === 'High' ? '#fee2e2' : issue.priority === 'Medium' ? '#fef9c3' : '#f1f5f9',
-                  color:      issue.priority === 'High' ? '#991b1b' : issue.priority === 'Medium' ? '#713f12' : '#475569',
+                  background: issue.priority === 'High' ? '#f3e2bc' : issue.priority === 'Medium' ? '#eef1f7' : '#eef1f7',
+                  color:      issue.priority === 'High' ? '#7a5c17' : issue.priority === 'Medium' ? '#101d3d' : '#6b7690',
                 }}
               >
                 {issue.priority}

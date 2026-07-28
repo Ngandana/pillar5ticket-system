@@ -8,8 +8,8 @@ export const ISSUE_CATALOGUE = [
     id: 'network',
     title: 'No Internet',
     emoji: '🌐',
-    color: '#ef4444',
-    bg: '#fef2f2',
+    color: '#101d3d',
+    bg: '#eef1f7',
     priority: 'High',
     sub: [
       'Cannot connect to Wi-Fi',
@@ -23,8 +23,8 @@ export const ISSUE_CATALOGUE = [
     id: 'access',
     title: 'Password Reset',
     emoji: '🔑',
-    color: '#10b981',
-    bg: '#ecfdf5',
+    color: '#c9932e',
+    bg: '#fbf3e4',
     priority: 'High',
     sub: [
       'Locked out of Windows login',
@@ -38,8 +38,8 @@ export const ISSUE_CATALOGUE = [
     id: 'software',
     title: 'Software Error',
     emoji: '🐛',
-    color: '#f97316',
-    bg: '#fff7ed',
+    color: '#8a6d1f',
+    bg: '#fbf3e4',
     priority: 'Medium',
     sub: [
       'Application keeps crashing',
@@ -53,8 +53,8 @@ export const ISSUE_CATALOGUE = [
     id: 'hardware',
     title: 'Hardware Issue',
     emoji: '🖥️',
-    color: '#8b5cf6',
-    bg: '#f5f3ff',
+    color: '#101d3d',
+    bg: '#eef1f7',
     priority: 'High',
     sub: [
       'Monitor not displaying anything',
@@ -84,8 +84,8 @@ export const ISSUE_CATALOGUE = [
     id: 'other',
     title: 'Other Issue',
     emoji: '❓',
-    color: '#64748b',
-    bg: '#f8fafc',
+    color: '#6b7690',
+    bg: '#f4f6fb',
     priority: 'Low',
     sub: [
       'General IT enquiry',
@@ -116,16 +116,16 @@ export const OFFICE_LOCATIONS = {
 };
 
 export const PRIORITY_COLORS = {
-  Critical: { bg: '#dc2626', text: '#fff' },
-  High:     { bg: '#fed7aa', text: '#9a3412' },
-  Medium:   { bg: '#fef9c3', text: '#854d0e' },
-  Low:      { bg: '#f1f5f9', text: '#475569' },
+  Critical: { bg: '#3a2c14', text: '#fff' },
+  High:     { bg: '#f3e2bc', text: '#7a5c17' },
+  Medium:   { bg: '#eef1f7', text: '#101d3d' },
+  Low:      { bg: '#eef1f7', text: '#6b7690' },
 };
 
 export const STATUS_COLORS = {
-  'Open':            { bg: '#dbeafe', text: '#1d4ed8' },
-  'In Progress':     { bg: '#ede9fe', text: '#6d28d9' },
-  'Waiting on User': { bg: '#fef3c7', text: '#92400e' },
-  'Resolved':        { bg: '#d1fae5', text: '#065f46' },
-  'Withdrawn':       { bg: '#f1f5f9', text: '#475569' },
+  'Open':            { bg: '#eef1f7', text: '#101d3d' },
+  'In Progress':     { bg: '#f3e2bc', text: '#7a5c17' },
+  'Waiting on User': { bg: '#eef1f7', text: '#6b7690' },
+  'Resolved':        { bg: '#101d3d', text: '#fff' },
+  'Withdrawn':       { bg: '#eef1f7', text: '#a2acc4' },
 };

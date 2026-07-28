@@ -44,25 +44,28 @@ export default function AuthPage({ onSuccess, onForgotPassword }) {
 
   return (
     <div className="auth-page">
-      <div className="auth-blob auth-blob--1" />
-      <div className="auth-blob auth-blob--2" />
-
-      <div className="auth-card">
-        <div className="auth-logo-wrap">
-          {/* LOGO: Will display your company logo if public/logo.png exists */}
-          <img 
-            src="/logo.png" 
-            alt="Company Logo" 
-            className="auth-logo-img"
-            onError={(e) => {
-              // Fallback to text if logo doesn't exist
-              e.target.style.display = 'none';
-              e.target.parentElement.innerHTML += '<div class="auth-logo">P5</div>';
-            }}
-          />
-          <h1 className="auth-heading">Pillar 5 Group</h1>
-          <p className="auth-tagline">IT Support Portal</p>
+      <div className="auth-panel-left">
+        <div className="auth-brand">
+          <div className="auth-brand-logo">
+            <img src="/logo.png" alt="Pillar 5 Group" />
+          </div>
+          <div className="auth-brand-divider" />
+          <div>
+            <p className="auth-brand-name">Pillar 5 Group</p>
+            <p className="auth-brand-role">IT Support Portal</p>
+          </div>
         </div>
+        <div className="auth-pitch">
+          <h1>Every issue, tracked and answered.</h1>
+          <p>Submit a ticket, follow it through triage, and hear back from the IT team — in one place.</p>
+        </div>
+        <div className="auth-rule-gold" />
+      </div>
+
+      <div className="auth-panel-right">
+      <div className="auth-card">
+        <h1 className="auth-heading">{mode === 'login' ? 'Sign in' : 'Create your account'}</h1>
+        <p className="auth-tagline">Use your Pillar 5 company email.</p>
 
         {/* Tab toggle */}
         <div className="auth-tabs">
@@ -171,6 +174,7 @@ export default function AuthPage({ onSuccess, onForgotPassword }) {
           </p>
         )}
         */}
+      </div>
       </div>
     </div>
   );

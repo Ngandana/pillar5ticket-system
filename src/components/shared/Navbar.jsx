@@ -15,7 +15,7 @@ export default function Navbar({ user, onLogout }) {
         {/* Brand */}
         <div className="navbar-brand">
           <div className={`navbar-logo ${isAdmin ? 'navbar-logo--admin' : ''}`}>
-            <span>P5</span>
+            <img src="/logo.png" alt="Pillar 5 Group" />
           </div>
           <div>
             <p className="navbar-title">
