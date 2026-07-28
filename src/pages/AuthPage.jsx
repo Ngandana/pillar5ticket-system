@@ -166,14 +166,6 @@ export default function AuthPage({ onSuccess, onForgotPassword }) {
             {mode === 'login' ? 'Sign In' : 'Create Account'}
           </button>
         </form>
-
-        {/*
-        {mode === 'login' && (
-          <p className="auth-hint">
-            Default super admin: <code>s.ngandana@pillar5group.co.za</code> / <code>Admin@Pillar5!</code>
-          </p>
-        )}
-        */}
       </div>
       </div>
     </div>

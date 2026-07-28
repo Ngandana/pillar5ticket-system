@@ -67,16 +67,22 @@ async function initDB() {
       );
     `);
 
-    // Verification tokens
+    // Verification / password-reset tokens (distinguished by `type`)
     await client.query(`
       CREATE TABLE IF NOT EXISTS verification_tokens (
         id         SERIAL PRIMARY KEY,
         user_id    INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         token      VARCHAR(255) UNIQUE NOT NULL,
+        type       VARCHAR(30) NOT NULL DEFAULT 'email_verification',
         expires_at TIMESTAMP NOT NULL,
         used_at    TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+    `);
+    // Backfill for databases created before the `type` column existed
+    await client.query(`
+      ALTER TABLE verification_tokens
+      ADD COLUMN IF NOT EXISTS type VARCHAR(30) NOT NULL DEFAULT 'email_verification';
     `);
 
     // Tickets
@@ -124,27 +130,33 @@ async function initDB() {
       );
     `);
 
-    // Seed default super admin (pre-verified)
-    const adminCheck = await client.query(
-      "SELECT id, role FROM users WHERE email = 's.ngandana@pillar5group.co.za'"
-    );
+    // Seed default super admin (pre-verified) — only if credentials are supplied via env
+    const adminEmail    = process.env.DEFAULT_ADMIN_EMAIL;
+    const adminPassword = process.env.DEFAULT_ADMIN_PASSWORD;
 
-    if (adminCheck.rows.length === 0) {
-      const hash = await bcrypt.hash('Admin@Pillar5!', 12);
-      await client.query(
-        `INSERT INTO users (name, email, password, role, email_verified, verified_at)
-         VALUES ($1, $2, $3, 'SUPER_ADMIN', TRUE, CURRENT_TIMESTAMP)`,
-        ['System Admin', 's.ngandana@pillar5group.co.za', hash]
-      );
-      console.log('✅ SUPER_ADMIN seeded → s.ngandana@pillar5group.co.za / Admin@Pillar5!');
-    } else if (adminCheck.rows[0].role !== 'SUPER_ADMIN') {
-      // Self-heal: an older script or manual edit may have set an invalid/legacy
-      // role value (e.g. 'Admin') on this account, which would silently route
-      // the account into the employee dashboard on login.
-      await client.query(
-        "UPDATE users SET role = 'SUPER_ADMIN', email_verified = TRUE WHERE email = 's.ngandana@pillar5group.co.za'"
-      );
-      console.log(`⚠️  Corrected default admin role from "${adminCheck.rows[0].role}" to "SUPER_ADMIN".`);
+    if (!adminEmail || !adminPassword) {
+      console.log('ℹ️  DEFAULT_ADMIN_EMAIL / DEFAULT_ADMIN_PASSWORD not set — skipping admin seed.');
+    } else {
+      const adminCheck = await client.query('SELECT id, role FROM users WHERE email = $1', [adminEmail]);
+
+      if (adminCheck.rows.length === 0) {
+        const hash = await bcrypt.hash(adminPassword, 12);
+        await client.query(
+          `INSERT INTO users (name, email, password, role, email_verified, verified_at)
+           VALUES ($1, $2, $3, 'SUPER_ADMIN', TRUE, CURRENT_TIMESTAMP)`,
+          ['System Admin', adminEmail, hash]
+        );
+        console.log(`✅ SUPER_ADMIN seeded → ${adminEmail}`);
+      } else if (adminCheck.rows[0].role !== 'SUPER_ADMIN') {
+        // Self-heal: an older script or manual edit may have set an invalid/legacy
+        // role value (e.g. 'Admin') on this account, which would silently route
+        // the account into the employee dashboard on login.
+        await client.query(
+          'UPDATE users SET role = $1, email_verified = TRUE WHERE email = $2',
+          ['SUPER_ADMIN', adminEmail]
+        );
+        console.log(`⚠️  Corrected default admin role from "${adminCheck.rows[0].role}" to "SUPER_ADMIN".`);
+      }
     }
 
     console.log('✅ Database ready (with email verification & tiered roles)');

@@ -114,7 +114,7 @@ Visit: **http://localhost:5173**
 - Can assign tickets to staff
 - Can escalate priority
 - Can export audit logs
-- **Default:** `s.ngandana@pillar5group.co.za` / `Admin@Pillar5!`
+- **Default:** seeded from `DEFAULT_ADMIN_EMAIL` / `DEFAULT_ADMIN_PASSWORD` env vars at boot (no credentials hardcoded)
 
 ### 🔧 TECH_ADMIN (IT Support)
 - View and respond to tickets

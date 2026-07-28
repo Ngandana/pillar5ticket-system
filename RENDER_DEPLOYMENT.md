@@ -91,9 +91,11 @@ Still in Render service settings:
 | `DB_USER` | (from Railway step 1.3) |
 | `DB_PASSWORD` | (from Railway step 1.3) |
 | `DB_NAME` | (from Railway step 1.3) |
-| `JWT_SECRET` | `pillar5_super_secret_2026_change_me` |
+| `JWT_SECRET` | generate your own long random string — do not reuse any value from this doc |
 | `ALLOWED_ORIGIN` | `https://your-vercel-url.vercel.app` (leave as `*` for now) |
 | `NODE_ENV` | `production` |
+| `DEFAULT_ADMIN_EMAIL` | the email for your first SUPER_ADMIN account |
+| `DEFAULT_ADMIN_PASSWORD` | a strong password of your choosing — seeds that account on first boot only |
 
 3. Click **Create Web Service**
 
@@ -148,7 +150,7 @@ Wait for build to complete (~3 minutes).
 Vercel will give you a URL like: `https://pillar5-ticket-system.vercel.app`
 
 Open it and:
-1. Try to log in with `s.ngandana@pillar5group.co.za` / `Admin@Pillar5!`
+1. Try to log in with the `DEFAULT_ADMIN_EMAIL` / `DEFAULT_ADMIN_PASSWORD` you set in Render's env vars
 2. If login works, your full stack is connected ✅
 
 ---

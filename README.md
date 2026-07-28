@@ -93,6 +93,17 @@ ALLOWED_ORIGIN=http://localhost:5173
 NODE_ENV=development
 ```
 
+### Initial SUPER_ADMIN account
+The very first admin account is seeded automatically the first time the server boots,
+using these two variables (not committed anywhere — set them only in your local `.env`
+or your hosting provider's env var settings):
+```env
+DEFAULT_ADMIN_EMAIL=you@pillar5group.co.za
+DEFAULT_ADMIN_PASSWORD=choose_a_strong_password
+```
+If they're left unset, no default admin is created and you'll need to promote a user
+manually in the database, or set these and run `node fix-admin.js` from `backend/`.
+
 ---
 
 ## User Roles
@@ -104,10 +115,8 @@ NODE_ENV=development
 - Can access audit logs & exports
 - Cannot be assigned tickets directly
 
-**Default account:**
-- Email: `s.ngandana@pillar5group.co.za`
-- Password: `Admin@Pillar5!`
-- Pre-verified (no email confirmation needed)
+The first SUPER_ADMIN account is seeded from `DEFAULT_ADMIN_EMAIL` / `DEFAULT_ADMIN_PASSWORD`
+(see [.env Configuration](#env-configuration) below) and is pre-verified.
 
 ### 🔧 TECH_ADMIN (IT Support)
 - Access admin triage queue
@@ -196,13 +205,11 @@ pillar5-ticket-system/
 
 ---
 
-## Default Credentials
+## Initial Admin Access
 
-| Field    | Value                             |
-|----------|-----------------------------------|
-| Email    | s.ngandana@pillar5group.co.za     |
-| Password | Admin@Pillar5!                    |
-| Role     | SUPER_ADMIN (pre-verified)        |
+There is no hardcoded default admin account. The first SUPER_ADMIN is created at boot
+from the `DEFAULT_ADMIN_EMAIL` / `DEFAULT_ADMIN_PASSWORD` env vars — set those in your
+deployment's environment configuration (Render dashboard, etc.), not in this repo.
 
 ---
 

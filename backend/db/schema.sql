@@ -20,11 +20,12 @@ CREATE TABLE IF NOT EXISTS users (
   created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Email Verification Tokens
+-- Verification / password-reset tokens (distinguished by `type`)
 CREATE TABLE IF NOT EXISTS verification_tokens (
   id         SERIAL PRIMARY KEY,
   user_id    INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   token      VARCHAR(255) UNIQUE NOT NULL,
+  type       VARCHAR(30) NOT NULL DEFAULT 'email_verification',
   expires_at TIMESTAMP NOT NULL,
   used_at    TIMESTAMP,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -77,14 +78,6 @@ CREATE INDEX IF NOT EXISTS idx_comments_ticket  ON comments(ticket_id);
 CREATE INDEX IF NOT EXISTS idx_logs_ticket      ON activity_logs(ticket_id);
 CREATE INDEX IF NOT EXISTS idx_verification_user ON verification_tokens(user_id);
 
--- Default super admin (pre-verified)
-INSERT INTO users (name, email, password, role, email_verified, verified_at)
-VALUES (
-  'System Admin',
-  's.ngandana@pillar5group.co.za',
-  '$2b$12$uJQ/.oH2QTeOSHo0q.Rjcu46J.UiVg3sFB0YvlqeCA2d.Ou6jucd2',
-  'SUPER_ADMIN',
-  TRUE,
-  CURRENT_TIMESTAMP
-)
-ON CONFLICT (email) DO NOTHING;
+-- The default SUPER_ADMIN account is seeded at server boot (see backend/db/init.js)
+-- from the DEFAULT_ADMIN_EMAIL / DEFAULT_ADMIN_PASSWORD environment variables —
+-- no credentials are hardcoded here.

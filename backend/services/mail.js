@@ -30,7 +30,7 @@ const transporter = nodemailer.createTransport({
 async function generateToken(userId, type) {
   // Invalidate any existing unused tokens of the same type
   await pool.query(
-    `UPDATE auth_tokens SET used_at = CURRENT_TIMESTAMP
+    `UPDATE verification_tokens SET used_at = CURRENT_TIMESTAMP
      WHERE user_id = $1 AND type = $2 AND used_at IS NULL`,
     [userId, type]
   );
@@ -39,7 +39,7 @@ async function generateToken(userId, type) {
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
   await pool.query(
-    'INSERT INTO auth_tokens (user_id, token, type, expires_at) VALUES ($1, $2, $3, $4)',
+    'INSERT INTO verification_tokens (user_id, token, type, expires_at) VALUES ($1, $2, $3, $4)',
     [userId, token, type, expiresAt]
   );
 
@@ -49,7 +49,7 @@ async function generateToken(userId, type) {
 // ── Shared: Validate + consume token ─────────────────────────
 async function consumeToken(token, expectedType) {
   const result = await pool.query(
-    `SELECT user_id, expires_at FROM auth_tokens
+    `SELECT user_id, expires_at FROM verification_tokens
      WHERE token = $1 AND type = $2 AND used_at IS NULL`,
     [token, expectedType]
   );
@@ -63,7 +63,7 @@ async function consumeToken(token, expectedType) {
     throw new Error('This link has expired (24 hours). Please request a new one.');
 
   await pool.query(
-    'UPDATE auth_tokens SET used_at = CURRENT_TIMESTAMP WHERE token = $1',
+    'UPDATE verification_tokens SET used_at = CURRENT_TIMESTAMP WHERE token = $1',
     [token]
   );
 
