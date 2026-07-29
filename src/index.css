@@ -90,8 +90,8 @@ button { cursor: pointer; border: none; background: none; }
 }
 .navbar-logo--admin { background: linear-gradient(135deg, #101d3d, #c9932e); }
 .navbar-logo span { color: #fff; font-weight: 900; font-size: 11px; letter-spacing: 0.5px; }
-.navbar-title { color: var(--text); font-weight: 700; font-size: 14px; line-height: 1.2; }
-.navbar-subtitle { color: var(--text-dim); font-size: 11px; }
+.navbar-title { color: #ffffff; font-weight: 700; font-size: 14px; line-height: 1.2; }
+.navbar-subtitle { color: rgba(255,255,255,0.55); font-size: 11px; }
 .navbar-right { display: flex; align-items: center; gap: 10px; }
 .navbar-user {
   display: flex; align-items: center; gap: 6px;
@@ -109,12 +109,12 @@ button { cursor: pointer; border: none; background: none; }
 }
 .navbar-logout {
   display: flex; align-items: center; gap: 6px;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); padding: 6px 12px;
-  color: var(--text-muted); font-size: 12px; font-weight: 500;
-  transition: color 0.15s, border-color 0.15s;
+  background: transparent; border: 1px solid rgba(255,255,255,0.2);
+  border-radius: var(--radius-sm); padding: 6px 14px;
+  color: rgba(255,255,255,0.85); font-size: 12px; font-weight: 600;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
-.navbar-logout:hover { color: var(--text); border-color: var(--text-dim); }
+.navbar-logout:hover { color: #ffffff; border-color: rgba(255,255,255,0.45); background: rgba(255,255,255,0.08); }
 
 /* ── Badge ─────────────────────────────────────────────────── */
 .badge {
